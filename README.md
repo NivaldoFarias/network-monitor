@@ -26,35 +26,32 @@ A lightweight network monitor that runs as a systemd service and stores results 
 
 ## Prerequisites
 
-You'll only need two dependencies:
+You'll need these dependencies:
 
-1. [Bun](https://bun.sh/docs/installation)
-2. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli)
+1. [Node.js](https://nodejs.org/en/download/)
+2. [Bun](https://bun.sh/docs/installation)
+3. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli)
 
 ## Installation
 
 1. Clone this repository and navigate to the directory.
 2. Install dependencies using Bun.
-3. Install the systemd service:
-
-> [!IMPORTANT]
-> Replace `username` with your main user's username.
+3. Setup the systemd service:
 
 ```bash
-# Copy service file to systemd directory
-sudo cp network-monitor.service /etc/systemd/system/
+# Regular setup
+bun run setup-systemd
 
-# Create log files with appropriate permissions
-sudo touch /var/log/network-monitor.log /var/log/network-monitor.error.log
-sudo chown username:username /var/log/network-monitor.log /var/log/network-monitor.error.log
-
-# Reload systemd daemon
-sudo systemctl daemon-reload
-
-# Enable and start the service
-sudo systemctl enable network-monitor
-sudo systemctl start network-monitor
+# Force setup (overwrites existing service)
+bun run setup-systemd --force
 ```
+
+The setup script will automatically:
+- Build the TypeScript project
+- Generate the systemd service file
+- Setup log files with appropriate permissions
+- Install and enable the service
+- Start the service
 
 ## Service Management
 
@@ -74,7 +71,7 @@ tail -f /var/log/network-monitor.error.log
 
 ### Configuration
 
-The service can be configured through environment variables in the systemd service file:
+The service can be configured through environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -88,24 +85,39 @@ The service can be configured through environment variables in the systemd servi
 
 To modify these settings:
 
-1. Edit the service file:
+1. Edit the environment variables:
 
 ```bash
 sudo systemctl edit network-monitor
 ```
 
-2. Restart the service:
+2. Add your overrides in the following format:
+
+```ini
+[Service]
+Environment=SPEEDTEST_INTERVAL=3600000
+Environment=SPEEDTEST_VERBOSE=true
+```
+
+3. Restart the service:
 
 ```bash
 sudo systemctl restart network-monitor
 ```
 
-### Manual Execution
+### Development
 
-For testing or debugging, you can run the service manually:
+For development and testing:
 
 ```bash
-bun run src/index.ts
+# Run in development mode with auto-reload
+bun run dev
+
+# Build the project
+bun run build
+
+# Run the built version
+bun start
 ```
 
 ## Database Schema
@@ -133,22 +145,24 @@ The SQLite database (`speedtest.db`) contains a single table `speed_results` wit
 ## Project Structure
 
 ```plaintext
+.
 ├── src/
-│   ├── index.ts                # Main entry point
-│   ├── service.ts              # Service implementation
-│   ├── config.ts               # Configuration management
-│   ├── db.ts                   # Database operations
-│   └── types/                  # TypeScript type definitions
-├── speedtest.db                # SQLite database
-├── package.json                # Project configuration
-└── network-monitor.service     # Systemd service file
+│   ├── config.ts                 # Configuration schema and loading
+│   ├── database.ts               # Database operations
+│   ├── setup-systemd-service.ts  # Systemd service setup
+│   ├── speedtest-service.ts      # Core service implementation
+│   └── types.d.ts                # TypeScript type definitions
+├── index.ts                      # Application entry point
+├── package.json                  # Project configuration
+├── tsconfig.json                 # TypeScript configuration
+└── README.md                     # This file
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
