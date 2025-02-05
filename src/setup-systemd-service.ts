@@ -17,12 +17,24 @@ export class SystemdServiceSetup {
   constructor() {
     this.options = configSchema.parse({
       verbose: import.meta.env.SPEEDTEST_VERBOSE === "true",
-      testInterval: import.meta.env.SPEEDTEST_INTERVAL ? parseInt(import.meta.env.SPEEDTEST_INTERVAL, 10) : undefined,
-      maxRetries: import.meta.env.SPEEDTEST_MAX_RETRIES ? parseInt(import.meta.env.SPEEDTEST_MAX_RETRIES, 10) : undefined,
-      backoffDelay: import.meta.env.SPEEDTEST_BACKOFF_DELAY ? parseInt(import.meta.env.SPEEDTEST_BACKOFF_DELAY, 10) : undefined,
-      maxBackoffDelay: import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY ? parseInt(import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY, 10) : undefined,
-      circuitBreakerThreshold: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD ? parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD, 10) : undefined,
-      circuitBreakerTimeout: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT ? parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT, 10) : undefined,
+      testInterval: import.meta.env.SPEEDTEST_INTERVAL
+        ? Number.parseInt(import.meta.env.SPEEDTEST_INTERVAL)
+        : undefined,
+      maxRetries: import.meta.env.SPEEDTEST_MAX_RETRIES
+        ? Number.parseInt(import.meta.env.SPEEDTEST_MAX_RETRIES)
+        : undefined,
+      backoffDelay: import.meta.env.SPEEDTEST_BACKOFF_DELAY
+        ? Number.parseInt(import.meta.env.SPEEDTEST_BACKOFF_DELAY)
+        : undefined,
+      maxBackoffDelay: import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY
+        ? Number.parseInt(import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY)
+        : undefined,
+      circuitBreakerThreshold: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD
+        ? Number.parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD)
+        : undefined,
+      circuitBreakerTimeout: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT
+        ? Number.parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT)
+        : undefined,
     });
   }
 
