@@ -1,4 +1,4 @@
-import { type ServiceConfig } from "./types";
+import type { ServiceConfig } from "./types";
 
 /**
  * Load and validate configuration from environment variables

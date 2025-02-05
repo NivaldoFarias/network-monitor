@@ -33,19 +33,8 @@ You'll only need two dependencies:
 
 ## Installation
 
-1. Clone this repository:
-
-```bash
-git clone https://github.com/yourusername/speedtest-monitor.git
-cd speedtest-monitor
-```
-
-2. Install dependencies:
-
-```bash
-bun install
-```
-
+1. Clone this repository and navigate to the directory.
+2. Install dependencies using Bun.
 3. Install the systemd service:
 
 > [!IMPORTANT]
