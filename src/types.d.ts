@@ -122,4 +122,4 @@ export interface SpeedTestData {
     url: string;
     persisted: boolean;
   };
-};
+}

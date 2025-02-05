@@ -1,17 +1,7 @@
 import Bun from "bun";
 
 import { join } from "path";
-import { z } from "zod";
-
-const serviceOptionsSchema = z.object({
-  VERBOSE: z.boolean().default(false),
-  INTERVAL: z.number().positive().default(1_800_000),
-  MAX_RETRIES: z.number().positive().default(3),
-  BACKOFF_DELAY: z.number().positive().default(5_000),
-  MAX_BACKOFF_DELAY: z.number().positive().default(300_000),
-  CIRCUIT_BREAKER_THRESHOLD: z.number().positive().default(5),
-  CIRCUIT_BREAKER_TIMEOUT: z.number().positive().default(1_800_000),
-});
+import { configSchema, type ServiceConfig } from "./config";
 
 /**
  * Class responsible for setting up the systemd service for network monitoring
@@ -22,10 +12,18 @@ export class SystemdServiceSetup {
   private readonly serviceFilePath = "/etc/systemd/system/network-monitor.service";
   private readonly logFilePath = "/var/log/network-monitor.log";
   private readonly errorLogFilePath = "/var/log/network-monitor.error.log";
-  private readonly options: z.infer<typeof serviceOptionsSchema>;
+  private readonly options: ServiceConfig;
 
   constructor() {
-    this.options = serviceOptionsSchema.parse(import.meta.env);
+    this.options = configSchema.parse({
+      verbose: import.meta.env.SPEEDTEST_VERBOSE === "true",
+      testInterval: import.meta.env.SPEEDTEST_INTERVAL ? parseInt(import.meta.env.SPEEDTEST_INTERVAL, 10) : undefined,
+      maxRetries: import.meta.env.SPEEDTEST_MAX_RETRIES ? parseInt(import.meta.env.SPEEDTEST_MAX_RETRIES, 10) : undefined,
+      backoffDelay: import.meta.env.SPEEDTEST_BACKOFF_DELAY ? parseInt(import.meta.env.SPEEDTEST_BACKOFF_DELAY, 10) : undefined,
+      maxBackoffDelay: import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY ? parseInt(import.meta.env.SPEEDTEST_MAX_BACKOFF_DELAY, 10) : undefined,
+      circuitBreakerThreshold: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD ? parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD, 10) : undefined,
+      circuitBreakerTimeout: import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT ? parseInt(import.meta.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT, 10) : undefined,
+    });
   }
 
   /**
@@ -174,18 +172,20 @@ Type=simple
 User=${this.username}
 Group=${this.username}
 WorkingDirectory=${projectRoot}
-Environment=SPEEDTEST_VERBOSE=${this.options.VERBOSE}
-Environment=SPEEDTEST_INTERVAL=${this.options.INTERVAL}
-Environment=SPEEDTEST_MAX_RETRIES=${this.options.MAX_RETRIES}
-Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.BACKOFF_DELAY}
-Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.MAX_BACKOFF_DELAY}
-Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.CIRCUIT_BREAKER_THRESHOLD}
-Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.CIRCUIT_BREAKER_TIMEOUT}
+Environment=SPEEDTEST_VERBOSE=${this.options.verbose}
+Environment=SPEEDTEST_INTERVAL=${this.options.testInterval}
+Environment=SPEEDTEST_MAX_RETRIES=${this.options.maxRetries}
+Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.backoffDelay}
+Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.maxBackoffDelay}
+Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.circuitBreakerThreshold}
+Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.circuitBreakerTimeout}
 ExecStart=${Bun.which("bun")} ${join(projectRoot, "dist/index.js")}
 Restart=always
 RestartSec=10
 StandardOutput=append:${this.logFilePath}
 StandardError=append:${this.errorLogFilePath}
+StartLimitIntervalSec=300
+StartLimitBurst=3
 
 [Install]
 WantedBy=multi-user.target`;

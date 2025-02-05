@@ -1,31 +1,50 @@
-import type { ServiceConfig } from "./types";
+import { z } from "zod";
+
+/**
+ * Configuration schema for the speed test monitor service
+ */
+export const configSchema = z.object({
+  dbPath: z.string().default("speedtest.db"),
+  verbose: z.boolean().default(false),
+  testInterval: z.number().positive().default(1_800_000),           // 30 minutes
+  maxRetries: z.number().positive().default(3),
+  backoffDelay: z.number().positive().default(5_000),               // 5 seconds
+  maxBackoffDelay: z.number().positive().default(300_000),          // 5 minutes
+  circuitBreakerThreshold: z.number().positive().default(5),
+  circuitBreakerTimeout: z.number().positive().default(1_800_000),  // 30 minutes
+});
+
+export type ServiceConfig = z.infer<typeof configSchema>;
 
 /**
  * Load and validate configuration from environment variables
  */
 export function loadConfig(): ServiceConfig {
-  return {
-    dbPath: process.env.SPEEDTEST_DB_PATH ?? "speedtest.db",
+  return configSchema.parse({
+    dbPath: process.env.SPEEDTEST_DB_PATH,
     verbose: process.env.SPEEDTEST_VERBOSE === "true",
-    testInterval: parseInt(process.env.SPEEDTEST_INTERVAL ?? "1800000", 10), // 30 minutes
-    maxRetries: parseInt(process.env.SPEEDTEST_MAX_RETRIES ?? "3", 10),
-    backoffDelay: parseInt(process.env.SPEEDTEST_BACKOFF_DELAY ?? "5000", 10), // 5 seconds
-    maxBackoffDelay: parseInt(process.env.SPEEDTEST_MAX_BACKOFF_DELAY ?? "300000", 10), // 5 minutes
-    circuitBreakerThreshold: parseInt(process.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD ?? "5", 10),
-    circuitBreakerTimeout: parseInt(process.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT ?? "1800000", 10), // 30 minutes
-  };
+    testInterval: process.env.SPEEDTEST_INTERVAL
+      ? Number.parseInt(process.env.SPEEDTEST_INTERVAL)
+      : undefined,
+    maxRetries: process.env.SPEEDTEST_MAX_RETRIES
+      ? Number.parseInt(process.env.SPEEDTEST_MAX_RETRIES)
+      : undefined,
+    backoffDelay: process.env.SPEEDTEST_BACKOFF_DELAY
+      ? Number.parseInt(process.env.SPEEDTEST_BACKOFF_DELAY)
+      : undefined,
+    maxBackoffDelay: process.env.SPEEDTEST_MAX_BACKOFF_DELAY
+      ? Number.parseInt(process.env.SPEEDTEST_MAX_BACKOFF_DELAY)
+      : undefined,
+    circuitBreakerThreshold: process.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD
+      ? Number.parseInt(process.env.SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD)
+      : undefined,
+    circuitBreakerTimeout: process.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT
+      ? Number.parseInt(process.env.SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT)
+      : undefined,
+  });
 }
 
 /**
- * Default configuration values
+ * Default configuration values (these are handled by Zod schema defaults)
  */
-export const DEFAULT_CONFIG: ServiceConfig = {
-  dbPath: "speedtest.db",
-  verbose: false,
-  testInterval: 1_800_000,            // 30 minutes
-  maxRetries: 3,
-  backoffDelay: 5_000,               // 5 seconds
-  maxBackoffDelay: 300_000,          // 5 minutes
-  circuitBreakerThreshold: 5,
-  circuitBreakerTimeout: 1_800_000,   // 30 minutes
-}; 
+export const DEFAULT_CONFIG = configSchema.parse({}); 

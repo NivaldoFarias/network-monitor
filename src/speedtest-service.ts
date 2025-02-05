@@ -1,5 +1,5 @@
 import Bun from "bun";
-import { networkInterfaces, hostname } from "node:os";
+import { networkInterfaces, hostname } from "os";
 
 import {
   initializeDatabase,
