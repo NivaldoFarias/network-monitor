@@ -1,6 +1,6 @@
 # Network Monitor
 
-A lightweight network monitor that runs via CRON and stores results in SQLite.
+A lightweight network monitor that runs as a systemd service and stores results in SQLite.
 
 ## Features
 
@@ -14,10 +14,15 @@ A lightweight network monitor that runs via CRON and stores results in SQLite.
   - Device identification
 - Automatic network type detection (WiFi, Ethernet, Cellular)
 - Connection quality assessment
-- Designed to run via CRON at configurable intervals
-- Minimal resource usage - runs once and exits
+- Runs as a systemd service with:
+  - Graceful shutdown handling
+  - Error recovery with exponential backoff
+  - Circuit breaker for failure protection
+  - Health monitoring
+  - Automatic restart on failure
+- Minimal resource usage with idle optimization
 - TypeScript implementation using Bun runtime
-- Detailed verbose logging option
+- Detailed logging with rotation
 
 ## Prerequisites
 
@@ -41,89 +46,77 @@ cd speedtest-monitor
 bun install
 ```
 
-## Usage
+3. Install the systemd service:
+
+> [!IMPORTANT]
+> Replace `username` with your main user's username.
+
+```bash
+# Copy service file to systemd directory
+sudo cp speedtest-monitor.service /etc/systemd/system/
+
+# Create log files with appropriate permissions
+sudo touch /var/log/speedtest-monitor.log /var/log/speedtest-monitor.error.log
+sudo chown username:username /var/log/speedtest-monitor.log /var/log/speedtest-monitor.error.log
+
+# Reload systemd daemon
+sudo systemctl daemon-reload
+
+# Enable and start the service
+sudo systemctl enable speedtest-monitor
+sudo systemctl start speedtest-monitor
+```
+
+## Service Management
+
+### Checking Status
+
+```bash
+# View service status
+sudo systemctl status speedtest-monitor
+
+# View logs
+sudo journalctl -u speedtest-monitor -f
+
+# View application logs
+tail -f /var/log/speedtest-monitor.log
+tail -f /var/log/speedtest-monitor.error.log
+```
+
+### Configuration
+
+The service can be configured through environment variables in the systemd service file:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| SPEEDTEST_VERBOSE | Enable verbose logging | false |
+| SPEEDTEST_INTERVAL | Test interval in milliseconds | 1800000 (30 min) |
+| SPEEDTEST_MAX_RETRIES | Maximum retry attempts | 3 |
+| SPEEDTEST_BACKOFF_DELAY | Base delay for exponential backoff | 5000 (5s) |
+| SPEEDTEST_MAX_BACKOFF_DELAY | Maximum backoff delay | 300000 (5min) |
+| SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD | Failures before circuit breaks | 5 |
+| SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT | Circuit breaker reset time | 1800000 (30min) |
+
+To modify these settings:
+
+1. Edit the service file:
+
+```bash
+sudo systemctl edit speedtest-monitor
+```
+
+2. Restart the service:
+
+```bash
+sudo systemctl restart speedtest-monitor
+```
 
 ### Manual Execution
 
-Run a single speed test:
+For testing or debugging, you can run the service manually:
 
 ```bash
 bun run src/index.ts
-```
-
-With verbose output (includes detailed metrics):
-
-```bash
-bun run src/index.ts --verbose
-```
-
-### Setting up CRON
-
-1. Open your crontab for editing:
-
-```bash
-crontab -e
-```
-
-2. Add an entry to run the speed test at your desired interval. For example, to run every 30 minutes:
-
-```cron
-*/30 * * * * cd /path/to/speedtest-monitor && /home/yourusername/.bun/bin/bun run src/index.ts
-```
-
-Replace `/path/to/speedtest-monitor` with the actual path to your installation.
-
-Common cron intervals:
-- Every 30 minutes: `*/30 * * * *`
-- Every hour: `0 * * * *`
-- Every 2 hours: `0 */2 * * *`
-- Every day at midnight: `0 0 * * *`
-
-### Viewing Results
-
-The results are stored in `speedtest.db` in the project directory. You can query them using any SQLite client or the Bun SQLite API.
-
-Example queries to view results:
-
-
-#### Basic speed test results
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  ping as ping_ms,
-  download as download_mbps,
-  upload as upload_mbps,
-  connection_quality
-FROM speed_results
-ORDER BY timestamp DESC;
-```
-
-#### Network and server details
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  network_type,
-  network_ssid,
-  isp,
-  server_location,
-  test_server_distance as server_distance_km
-FROM speed_results
-ORDER BY timestamp DESC;
-```
-
-#### Connection quality metrics
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  ping as ping_ms,
-  latency_jitter as jitter_ms,
-  packet_loss as packet_loss_percent,
-  connection_quality
-FROM speed_results
-ORDER BY timestamp DESC;
 ```
 
 ## Database Schema
@@ -147,14 +140,20 @@ The SQLite database (`speedtest.db`) contains a single table `speed_results` wit
 | packet_loss | REAL | Packet loss percentage |
 | connection_quality | TEXT | Overall quality rating |
 | device_name | TEXT | System hostname |
-| test_server_distance | REAL | Distance to server in kilometers |
 
 ## Project Structure
 
-- `src/index.ts` - Main application code
-- `speedtest.db` - SQLite database (created on first run)
-- `package.json` - Project configuration
-- `tsconfig.json` - TypeScript configuration
+```plaintext
+├── src/
+│   ├── index.ts                # Main entry point
+│   ├── service.ts              # Service implementation
+│   ├── config.ts               # Configuration management
+│   ├── db.ts                   # Database operations
+│   └── types/                  # TypeScript type definitions
+├── speedtest.db                # SQLite database
+├── package.json                # Project configuration
+└── speedtest-monitor.service   # Systemd service file
+```
 
 ## Contributing
 
