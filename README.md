@@ -1,6 +1,6 @@
-# Speedtest Monitor
+# Network Monitor
 
-A lightweight internet speed test monitor that runs via CRON and stores results in SQLite.
+A lightweight network monitor that runs via CRON and stores results in SQLite.
 
 ## Features
 
