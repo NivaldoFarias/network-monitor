@@ -22,7 +22,6 @@ export class SystemdServiceSetup {
   private readonly serviceFilePath = "/etc/systemd/system/network-monitor.service";
   private readonly logFilePath = "/var/log/network-monitor.log";
   private readonly errorLogFilePath = "/var/log/network-monitor.error.log";
-
   private readonly options: z.infer<typeof serviceOptionsSchema>;
 
   constructor() {
@@ -71,8 +70,23 @@ export class SystemdServiceSetup {
       return;
     }
 
+    // Ensure we're in the project root directory
+    const projectRoot = join(this.projectDir, "..");
+
+    // Build the TypeScript file first
+    const buildProcess = await Bun.build({
+      entrypoints: [ join(projectRoot, "index.ts") ],
+      outdir: join(projectRoot, "dist"),
+      minify: true,
+      target: "bun",
+    });
+
+    if (!buildProcess.success) {
+      throw new Error(`Failed to build TypeScript file: ${buildProcess.logs}`);
+    }
+
     // Write to a temporary file first since /etc requires sudo
-    const tempFile = join(this.projectDir, "network-monitor.service.tmp");
+    const tempFile = join(projectRoot, "network-monitor.service.tmp");
     await Bun.write(tempFile, this.computedServiceFile);
 
     // Move to system directory with sudo
@@ -148,6 +162,8 @@ export class SystemdServiceSetup {
   }
 
   private get computedServiceFile() {
+    const projectRoot = join(this.projectDir, "..");
+
     return `[Unit]
 Description=Network Speed Test Monitor Service
 After=network-online.target
@@ -157,7 +173,7 @@ Wants=network-online.target
 Type=simple
 User=${this.username}
 Group=${this.username}
-WorkingDirectory=${this.projectDir}
+WorkingDirectory=${projectRoot}
 Environment=SPEEDTEST_VERBOSE=${this.options.VERBOSE}
 Environment=SPEEDTEST_INTERVAL=${this.options.INTERVAL}
 Environment=SPEEDTEST_MAX_RETRIES=${this.options.MAX_RETRIES}
@@ -165,11 +181,11 @@ Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.BACKOFF_DELAY}
 Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.MAX_BACKOFF_DELAY}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.CIRCUIT_BREAKER_THRESHOLD}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.CIRCUIT_BREAKER_TIMEOUT}
-ExecStart=${Bun.which("bun")} run index.ts
+ExecStart=${Bun.which("bun")} ${join(projectRoot, "dist/index.js")}
 Restart=always
 RestartSec=10
-StandardOutput=append:/var/log/network-monitor.log
-StandardError=append:/var/log/network-monitor.error.log
+StandardOutput=append:${this.logFilePath}
+StandardError=append:${this.errorLogFilePath}
 
 [Install]
 WantedBy=multi-user.target`;
@@ -179,5 +195,5 @@ WantedBy=multi-user.target`;
 // Run setup if this file is executed directly
 if (import.meta.main) {
   const setup = new SystemdServiceSetup();
-  await setup.setup();
+  await setup.setup(process.argv.includes("--force"));
 }

@@ -29,7 +29,7 @@ export function initializeDatabase(dbPath: string) {
       latency_jitter REAL,
       packet_loss REAL,
       connection_quality TEXT,
-      device_name TEXT,
+      device_name TEXT
     )
   `);
 
