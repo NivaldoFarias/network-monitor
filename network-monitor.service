@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=simple
 User=nivaldo
 Group=nivaldo
-WorkingDirectory=/home/nivaldo/src/projects/speedtest-monitor
+WorkingDirectory=/home/nivaldo/src/projects/network-monitor
 Environment=SPEEDTEST_VERBOSE=true
 Environment=SPEEDTEST_INTERVAL=1800000
 Environment=SPEEDTEST_MAX_RETRIES=3
@@ -18,8 +18,8 @@ Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=1800000
 ExecStart=/home/nivaldo/.bun/bin/bun run src/index.ts
 Restart=always
 RestartSec=10
-StandardOutput=append:/var/log/speedtest-monitor.log
-StandardError=append:/var/log/speedtest-monitor.error.log
+StandardOutput=append:/var/log/network-monitor.log
+StandardError=append:/var/log/network-monitor.error.log
 
 [Install]
 WantedBy=multi-user.target 

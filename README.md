@@ -42,18 +42,18 @@ You'll only need two dependencies:
 
 ```bash
 # Copy service file to systemd directory
-sudo cp speedtest-monitor.service /etc/systemd/system/
+sudo cp network-monitor.service /etc/systemd/system/
 
 # Create log files with appropriate permissions
-sudo touch /var/log/speedtest-monitor.log /var/log/speedtest-monitor.error.log
-sudo chown username:username /var/log/speedtest-monitor.log /var/log/speedtest-monitor.error.log
+sudo touch /var/log/network-monitor.log /var/log/network-monitor.error.log
+sudo chown username:username /var/log/network-monitor.log /var/log/network-monitor.error.log
 
 # Reload systemd daemon
 sudo systemctl daemon-reload
 
 # Enable and start the service
-sudo systemctl enable speedtest-monitor
-sudo systemctl start speedtest-monitor
+sudo systemctl enable network-monitor
+sudo systemctl start network-monitor
 ```
 
 ## Service Management
@@ -62,14 +62,14 @@ sudo systemctl start speedtest-monitor
 
 ```bash
 # View service status
-sudo systemctl status speedtest-monitor
+sudo systemctl status network-monitor
 
 # View logs
-sudo journalctl -u speedtest-monitor -f
+sudo journalctl -u network-monitor -f
 
 # View application logs
-tail -f /var/log/speedtest-monitor.log
-tail -f /var/log/speedtest-monitor.error.log
+tail -f /var/log/network-monitor.log
+tail -f /var/log/network-monitor.error.log
 ```
 
 ### Configuration
@@ -91,13 +91,13 @@ To modify these settings:
 1. Edit the service file:
 
 ```bash
-sudo systemctl edit speedtest-monitor
+sudo systemctl edit network-monitor
 ```
 
 2. Restart the service:
 
 ```bash
-sudo systemctl restart speedtest-monitor
+sudo systemctl restart network-monitor
 ```
 
 ### Manual Execution
@@ -141,7 +141,7 @@ The SQLite database (`speedtest.db`) contains a single table `speed_results` wit
 │   └── types/                  # TypeScript type definitions
 ├── speedtest.db                # SQLite database
 ├── package.json                # Project configuration
-└── speedtest-monitor.service   # Systemd service file
+└── network-monitor.service     # Systemd service file
 ```
 
 ## Contributing
