@@ -6,7 +6,7 @@ import {
   storeResult,
   closeDatabase,
   cleanupOldResults,
-} from "./db";
+} from "./database";
 
 import type {
   ServiceConfig,

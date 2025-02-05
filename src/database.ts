@@ -6,14 +6,14 @@ import { Database } from "bun:sqlite";
  * Initialize and return a database connection
  */
 export function initializeDatabase(dbPath: string) {
-  const db = new Database(dbPath);
+  const database = new Database(dbPath);
 
   // Enable WAL mode for better concurrency
-  db.run("PRAGMA journal_mode = WAL");
-  db.run("PRAGMA busy_timeout = 5000");
+  database.run("PRAGMA journal_mode = WAL");
+  database.run("PRAGMA busy_timeout = 5000");
 
   // Create table if it doesn't exist
-  db.run(`
+  database.run(`
     CREATE TABLE IF NOT EXISTS speed_results (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       timestamp TEXT,
@@ -33,14 +33,14 @@ export function initializeDatabase(dbPath: string) {
     )
   `);
 
-  return db;
+  return database;
 }
 
 /**
  * Store a speed test result in the database
  */
 export function storeResult(db: Database, result: SpeedTestResult) {
-  const stmt = db.prepare(`
+  const statement = db.prepare(`
     INSERT INTO speed_results (
       timestamp, ping, download, upload, network_ssid, network_type,
       ip_address, server_id, server_location, isp, latency_jitter,
@@ -48,7 +48,7 @@ export function storeResult(db: Database, result: SpeedTestResult) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  stmt.run(
+  statement.run(
     result.timestamp,
     result.ping,
     result.download,
@@ -94,20 +94,20 @@ export function getLastResult(db: Database) {
 /**
  * Clean up old test results (keep last 30 days)
  */
-export function cleanupOldResults(db: Database) {
+export function cleanupOldResults(database: Database) {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  db.run("DELETE FROM speed_results WHERE timestamp < ?", [ thirtyDaysAgo.toISOString() ]);
+  database.run("DELETE FROM speed_results WHERE timestamp < ?", [ thirtyDaysAgo.toISOString() ]);
 }
 
 /**
  * Safely close the database connection
  */
-export function closeDatabase(db: Database | null) {
-  if (db) {
+export function closeDatabase(database: Database | null) {
+  if (database) {
     try {
-      db.close();
+      database.close();
     } catch (error) {
       console.error("Error closing database:", error);
     }

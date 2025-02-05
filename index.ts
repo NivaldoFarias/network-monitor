@@ -1,5 +1,5 @@
-import { loadConfig } from "./config";
-import { SpeedTestService } from "./service";
+import { loadConfig } from "./src/config";
+import { SpeedTestService } from "./src/speedtest-service";
 
 async function main() {
   try {
