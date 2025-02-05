@@ -1,6 +1,6 @@
 # Network Monitor
 
-A lightweight network monitor that runs via CRON and stores results in SQLite.
+A lightweight network monitor that runs as a systemd service and stores results in SQLite.
 
 ## Features
 
@@ -14,116 +14,110 @@ A lightweight network monitor that runs via CRON and stores results in SQLite.
   - Device identification
 - Automatic network type detection (WiFi, Ethernet, Cellular)
 - Connection quality assessment
-- Designed to run via CRON at configurable intervals
-- Minimal resource usage - runs once and exits
+- Runs as a systemd service with:
+  - Graceful shutdown handling
+  - Error recovery with exponential backoff
+  - Circuit breaker for failure protection
+  - Health monitoring
+  - Automatic restart on failure
+- Minimal resource usage with idle optimization
 - TypeScript implementation using Bun runtime
-- Detailed verbose logging option
+- Detailed logging with rotation
 
 ## Prerequisites
 
-You'll only need two dependencies:
+You'll need these dependencies:
 
-1. [Bun](https://bun.sh/docs/installation)
-2. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli)
+1. [Node.js](https://nodejs.org/en/download/)
+2. [Bun](https://bun.sh/docs/installation)
+3. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli)
 
 ## Installation
 
-1. Clone this repository:
+1. Clone this repository and navigate to the directory.
+2. Install dependencies using Bun.
+3. Setup the systemd service:
 
 ```bash
-git clone https://github.com/yourusername/speedtest-monitor.git
-cd speedtest-monitor
+# Regular setup
+bun run setup-systemd
+
+# Force setup (overwrites existing service)
+bun run setup-systemd --force
 ```
 
-2. Install dependencies:
+The setup script will automatically:
+- Build the TypeScript project
+- Generate the systemd service file
+- Setup log files with appropriate permissions
+- Install and enable the service
+- Start the service
+
+## Service Management
+
+### Checking Status
 
 ```bash
-bun install
+# View service status
+sudo systemctl status network-monitor
+
+# View logs
+sudo journalctl -u network-monitor -f
+
+# View application logs
+tail -f /var/log/network-monitor.log
+tail -f /var/log/network-monitor.error.log
 ```
 
-## Usage
+### Configuration
 
-### Manual Execution
+The service can be configured through environment variables:
 
-Run a single speed test:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| SPEEDTEST_VERBOSE | Enable verbose logging | false |
+| SPEEDTEST_INTERVAL | Test interval in milliseconds | 1800000 (30 min) |
+| SPEEDTEST_MAX_RETRIES | Maximum retry attempts | 3 |
+| SPEEDTEST_BACKOFF_DELAY | Base delay for exponential backoff | 5000 (5s) |
+| SPEEDTEST_MAX_BACKOFF_DELAY | Maximum backoff delay | 300000 (5min) |
+| SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD | Failures before circuit breaks | 5 |
+| SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT | Circuit breaker reset time | 1800000 (30min) |
+
+To modify these settings:
+
+1. Edit the environment variables:
 
 ```bash
-bun run src/index.ts
+sudo systemctl edit network-monitor
 ```
 
-With verbose output (includes detailed metrics):
+2. Add your overrides in the following format:
+
+```ini
+[Service]
+Environment=SPEEDTEST_INTERVAL=3600000
+Environment=SPEEDTEST_VERBOSE=true
+```
+
+3. Restart the service:
 
 ```bash
-bun run src/index.ts --verbose
+sudo systemctl restart network-monitor
 ```
 
-### Setting up CRON
+### Development
 
-1. Open your crontab for editing:
+For development and testing:
 
 ```bash
-crontab -e
-```
+# Run in development mode with auto-reload
+bun run dev
 
-2. Add an entry to run the speed test at your desired interval. For example, to run every 30 minutes:
+# Build the project
+bun run build
 
-```cron
-*/30 * * * * cd /path/to/speedtest-monitor && /home/yourusername/.bun/bin/bun run src/index.ts
-```
-
-Replace `/path/to/speedtest-monitor` with the actual path to your installation.
-
-Common cron intervals:
-- Every 30 minutes: `*/30 * * * *`
-- Every hour: `0 * * * *`
-- Every 2 hours: `0 */2 * * *`
-- Every day at midnight: `0 0 * * *`
-
-### Viewing Results
-
-The results are stored in `speedtest.db` in the project directory. You can query them using any SQLite client or the Bun SQLite API.
-
-Example queries to view results:
-
-
-#### Basic speed test results
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  ping as ping_ms,
-  download as download_mbps,
-  upload as upload_mbps,
-  connection_quality
-FROM speed_results
-ORDER BY timestamp DESC;
-```
-
-#### Network and server details
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  network_type,
-  network_ssid,
-  isp,
-  server_location,
-  test_server_distance as server_distance_km
-FROM speed_results
-ORDER BY timestamp DESC;
-```
-
-#### Connection quality metrics
-
-```sql
-SELECT 
-  datetime(timestamp) as time,
-  ping as ping_ms,
-  latency_jitter as jitter_ms,
-  packet_loss as packet_loss_percent,
-  connection_quality
-FROM speed_results
-ORDER BY timestamp DESC;
+# Run the built version
+bun start
 ```
 
 ## Database Schema
@@ -147,20 +141,28 @@ The SQLite database (`speedtest.db`) contains a single table `speed_results` wit
 | packet_loss | REAL | Packet loss percentage |
 | connection_quality | TEXT | Overall quality rating |
 | device_name | TEXT | System hostname |
-| test_server_distance | REAL | Distance to server in kilometers |
 
 ## Project Structure
 
-- `src/index.ts` - Main application code
-- `speedtest.db` - SQLite database (created on first run)
-- `package.json` - Project configuration
-- `tsconfig.json` - TypeScript configuration
+```plaintext
+.
+├── src/
+│   ├── config.ts                 # Configuration schema and loading
+│   ├── database.ts               # Database operations
+│   ├── setup-systemd-service.ts  # Systemd service setup
+│   ├── speedtest-service.ts      # Core service implementation
+│   └── types.d.ts                # TypeScript type definitions
+├── index.ts                      # Application entry point
+├── package.json                  # Project configuration
+├── tsconfig.json                 # TypeScript configuration
+└── README.md                     # This file
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
