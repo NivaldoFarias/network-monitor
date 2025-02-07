@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "speedtest-monitor",
+      "name": "network-monitor",
       "dependencies": {
         "zod": "^3.24.1",
       },
@@ -10,7 +10,7 @@
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5.0.0",
+        "typescript": "^5.7.3",
       },
     },
   },

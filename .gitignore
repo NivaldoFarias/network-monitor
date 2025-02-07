@@ -1,9 +1,14 @@
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 
 speedtest.db*
+.dotfiles
+.config
+
+# Cursor Rules
+.cursorrules
+.cursor/
 
 # Logs
-
 logs
 _.log
 npm-debug.log_
@@ -102,11 +107,8 @@ web_modules/
 
 # dotenv environment variable files
 
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env*
+!*.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
 

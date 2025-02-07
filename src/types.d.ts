@@ -1,7 +1,12 @@
 import type { Database } from "bun:sqlite";
 
+export interface SystemdSetupOptions {
+  /** Whether to force regeneration of service files even if they exist */
+  force?: boolean;
+}
+
 /**
- * Configuration interface for the speed test monitor service
+ * Configuration interface for the `speedtest` monitor service
  */
 export interface ServiceConfig {
   /** Database file path relative to the current directory */
@@ -23,9 +28,9 @@ export interface ServiceConfig {
 }
 
 /**
- * Interface representing the complete speed test results
+ * Interface representing the `speedtest` metrics that are stored in the database.
  */
-export interface SpeedTestResult {
+export interface SpeedtestMetrics {
   timestamp: string;
   ping: number;
   download: number;
@@ -66,9 +71,9 @@ export interface HealthStatus {
 }
 
 /**
- * Interface representing the speed test data
+ * Interface representing the `speedtest` data
  */
-export interface SpeedTestData {
+export interface SpeedtestData {
   type: string;
   timestamp: string;
   ping: {
