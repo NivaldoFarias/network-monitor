@@ -1,6 +1,6 @@
 # Network Monitor
 
-A lightweight network monitor that runs as a systemd service and stores results in SQLite.
+A lightweight network monitor that runs as a systemd service and stores results in SQLite. Built with TypeScript and Bun runtime, it provides comprehensive network speed monitoring with robust error handling and data persistence.
 
 ## Features
 
@@ -13,7 +13,7 @@ A lightweight network monitor that runs as a systemd service and stores results 
   - ISP information
   - Device identification
 - Automatic network type detection (WiFi, Ethernet, Cellular)
-- Connection quality assessment
+- Connection quality assessment based on multiple metrics
 - Runs as a systemd service with:
   - Graceful shutdown handling
   - Error recovery with exponential backoff
@@ -23,31 +23,41 @@ A lightweight network monitor that runs as a systemd service and stores results 
 - Minimal resource usage with idle optimization
 - TypeScript implementation using Bun runtime
 - Detailed logging with rotation
+- XDG-compliant data storage
 
 ## Prerequisites
 
 You'll need these dependencies:
 
-1. [Node.js](https://nodejs.org/en/download/)
-2. [Bun](https://bun.sh/docs/installation)
-3. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli)
+1. [Bun Runtime](https://bun.sh/docs/installation)
+2. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli) *(optional, will be installed automatically if not found)*
 
 ## Installation
 
-1. Clone this repository and navigate to the directory.
-2. Install dependencies using Bun.
-3. Setup the systemd service:
+1. Clone this repository and navigate to the directory
+2. Install dependencies:
+
+```bash
+bun install
+```
+
+3. Copy the example environment file and adjust as needed:
+
+```bash
+cp .env.example .env
+```
+
+4. Setup the systemd service:
 
 ```bash
 # Regular setup
-bun run setup-systemd
+bun run bin/setup.ts
 
 # Force setup (overwrites existing service)
-bun run setup-systemd --force
+bun run bin/setup.ts --force
 ```
 
 The setup script will automatically:
-- Build the TypeScript project
 - Generate the systemd service file
 - Setup log files with appropriate permissions
 - Install and enable the service
@@ -110,19 +120,16 @@ sudo systemctl restart network-monitor
 For development and testing:
 
 ```bash
-# Run in development mode with auto-reload
-bun run dev
+# Run the monitor directly
+bun run bin/monitor.ts
 
-# Build the project
-bun run build
-
-# Run the built version
-bun start
+# Setup systemd service
+bun run bin/setup.ts
 ```
 
 ## Database Schema
 
-The SQLite database (`speedtest.db`) contains a single table `speed_results` with the following columns:
+The SQLite database is stored in `~/.local/share/network-monitor/speedtest.db` (following XDG base directory specification) and contains a single table `speed_results` with the following schema:
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -146,16 +153,20 @@ The SQLite database (`speedtest.db`) contains a single table `speed_results` wit
 
 ```plaintext
 .
+├── bin/
+│   ├── monitor.ts               # Service entry point
+│   └── setup.ts                 # Systemd setup script
 ├── src/
-│   ├── config.ts                 # Configuration schema and loading
-│   ├── database.ts               # Database operations
-│   ├── setup-systemd-service.ts  # Systemd service setup
-│   ├── speedtest-service.ts      # Core service implementation
-│   └── types.d.ts                # TypeScript type definitions
-├── index.ts                      # Application entry point
-├── package.json                  # Project configuration
-├── tsconfig.json                 # TypeScript configuration
-└── README.md                     # This file
+│   ├── services/
+│   │   ├── speedtest.service.ts # Core speed test implementation
+│   │   └── systemd.service.ts   # Systemd service management
+│   ├── config.ts               # Configuration management
+│   ├── database.ts             # Database operations
+│   └── types.d.ts             # TypeScript type definitions
+├── .env.example               # Environment variables template
+├── package.json              # Project configuration
+├── tsconfig.json            # TypeScript configuration
+└── README.md               # Documentation
 ```
 
 ## Contributing

@@ -183,29 +183,15 @@ export class SystemdService {
       return;
     }
 
-    // Ensure we're in the project root directory
-    const projectRoot = join(this.projectDir, "..");
-
-    // Build the TypeScript file first
-    const buildProcess = Bun.spawnSync([
-      "bun",
-      "run",
-      "build:monitor",
-    ]);
-
-    if (!buildProcess.success) {
-      throw new Error(`Failed to build TypeScript file: ${buildProcess.stderr.toString()}`);
-    }
-
     // Write to a temporary file first since /etc requires sudo
-    const tempFile = join(projectRoot, "network-monitor.service.tmp");
+    const tempFile = join(process.cwd(), "network-monitor.service.tmp");
     await Bun.write(tempFile, this.computedServiceFile);
 
     // Move to system directory with sudo
-    const process = Bun.spawnSync([ "sudo", "mv", tempFile, this.constants.serviceFilePath ]);
+    const cmdResult = Bun.spawnSync([ "sudo", "mv", tempFile, this.constants.serviceFilePath ]);
 
-    if (!process.success) {
-      throw new Error(`Failed to move service file: ${process.stderr.toString()}`);
+    if (!cmdResult.success) {
+      throw new Error(`Failed to move service file: ${cmdResult.stderr.toString()}`);
     }
 
     console.log("✅ Service file generated and installed");
@@ -333,7 +319,7 @@ Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.backoffDelay}
 Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.maxBackoffDelay}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.circuitBreakerThreshold}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.circuitBreakerTimeout}
-ExecStart=${Bun.which("bun")} ${join(projectRoot, "dist/monitor.js")}
+ExecStart=${Bun.which("bun")} ${join(projectRoot, "bin/monitor.ts")}
 Restart=always
 RestartSec=10
 StandardOutput=append:${this.constants.logFilePath}
