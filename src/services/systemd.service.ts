@@ -187,15 +187,14 @@ export class SystemdService {
     const projectRoot = join(this.projectDir, "..");
 
     // Build the TypeScript file first
-    const buildProcess = await Bun.build({
-      entrypoints: [ join(projectRoot, "index.ts") ],
-      outdir: join(projectRoot, "dist"),
-      minify: true,
-      target: "bun",
-    });
+    const buildProcess = Bun.spawnSync([
+      "bun",
+      "run",
+      "build:monitor",
+    ]);
 
     if (!buildProcess.success) {
-      throw new Error(`Failed to build TypeScript file: ${buildProcess.logs}`);
+      throw new Error(`Failed to build TypeScript file: ${buildProcess.stderr.toString()}`);
     }
 
     // Write to a temporary file first since /etc requires sudo
@@ -315,7 +314,7 @@ export class SystemdService {
    * ```
    */
   private get computedServiceFile() {
-    const projectRoot = join(this.projectDir, "..");
+    const projectRoot = process.cwd();
 
     return `[Unit]
 Description=Network Speed Test Monitor Service
@@ -334,13 +333,11 @@ Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.backoffDelay}
 Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.maxBackoffDelay}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.circuitBreakerThreshold}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.circuitBreakerTimeout}
-ExecStart=${Bun.which("bun")} ${join(projectRoot, "dist/index.js")}
+ExecStart=${Bun.which("bun")} ${join(projectRoot, "dist/monitor.js")}
 Restart=always
 RestartSec=10
 StandardOutput=append:${this.constants.logFilePath}
 StandardError=append:${this.constants.errorLogFilePath}
-StartLimitIntervalSec=300
-StartLimitBurst=3
 
 [Install]
 WantedBy=multi-user.target`;

@@ -1,7 +1,7 @@
 {
   "name": "network-monitor",
   "version": "0.0.1",
-  "description": "Network Monitor",
+  "description": "A lightweight network monitor that runs as a systemd service and stores results in SQLite",
   "type": "module",
   "scripts": {
     "start:monitor": "bun run dist/monitor.js",

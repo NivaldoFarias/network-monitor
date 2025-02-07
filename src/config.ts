@@ -1,7 +1,8 @@
-import { join } from "path";
+import { dirname, join } from "path";
 import { homedir } from "os";
 
 import { z } from "zod";
+import { existsSync, mkdirSync } from "fs";
 
 /**
  * Default configuration values for the speed test monitor service
@@ -15,8 +16,6 @@ import { z } from "zod";
  * ```
  */
 export const defaults = {
-  /** Default SQLite database path: ~/.network-monitor/data.db */
-  dbPath: getDefaultDbPath(),
   /** Verbose logging disabled by default */
   verbose: "false",
   /** Default test interval: 30 minutes (in milliseconds) */
@@ -42,15 +41,13 @@ export const defaults = {
  * @example
  * ```typescript
  * const config = configSchema.parse({
- *   dbPath: "./data.db",
  *   verbose: "true",
  *   testInterval: 3600000
  * });
  * ```
  */
 export const configSchema = z.object({
-  dbPath: z.string().default(defaults.dbPath),
-  verbose: z.enum([ "true", "false" ]).transform(val => val === "true").default(defaults.verbose),
+  verbose: z.enum([ "true", "false" ]).transform((value) => value === "true").default(defaults.verbose),
   testInterval: z.coerce.number().positive().default(defaults.testInterval),
   maxRetries: z.coerce.number().positive().default(defaults.maxRetries),
   backoffDelay: z.coerce.number().positive().default(defaults.backoffDelay),
@@ -77,8 +74,7 @@ export type ServiceConfig = z.infer<typeof configSchema>;
  */
 export function loadConfig(): ServiceConfig {
   return configSchema.parse({
-    dbPath: process.env.DATABASE_PATH,
-    verbose: process.env.SPEEDTEST_VERBOSE === "true",
+    verbose: process.env.SPEEDTEST_VERBOSE,
     testInterval: process.env.SPEEDTEST_INTERVAL,
     maxRetries: process.env.SPEEDTEST_MAX_RETRIES,
     backoffDelay: process.env.SPEEDTEST_BACKOFF_DELAY,
@@ -107,9 +103,11 @@ export const DEFAULT_CONFIG = configSchema.parse({});
  * console.log(`Database will be stored at: ${dbPath}`);
  * ```
  */
-function getDefaultDbPath() {
-  const xdgData = process.env.XDG_DATA_HOME || join(homedir(), ".local", "share");
+export function getDefaultDbPath() {
+  const path = join(homedir(), ".local", "share", "network-monitor");
 
-  return join(xdgData, "speedtest-monitor", "speedtest.db");
+  if (!existsSync(path)) mkdirSync(dirname(path), { recursive: true });
+
+  return join(path, "speedtest.db");
 }
 

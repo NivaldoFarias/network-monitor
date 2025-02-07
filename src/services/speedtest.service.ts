@@ -52,7 +52,7 @@ export class SpeedTestService {
    */
   private async initialize() {
     try {
-      this.state.db = initializeDatabase(this.config.dbPath);
+      this.state.db = initializeDatabase();
       this.state.isRunning = true;
 
       // Setup signal handlers
