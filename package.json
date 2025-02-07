@@ -1,18 +1,25 @@
 {
   "name": "network-monitor",
-  "module": "index.ts",
+  "version": "0.0.1",
+  "description": "Network Monitor",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts",
-    "build": "bun build index.ts --outfile dist/index.js --minify --target bun",
-    "dev": "bun run --watch index.ts",
-    "setup-systemd": "bun run src/setup-systemd-service.ts"
+    "start:monitor": "bun run dist/monitor.js",
+    "dev:monitor": "bun run --watch bin/monitor.ts",
+    "build:monitor": "bun build bin/monitor.ts --outfile dist/monitor.js --minify --target bun",
+    "start:setup": "bun run dist/setup.js",
+    "dev:setup": "bun run --watch bin/setup.ts",
+    "build:setup": "bun build bin/setup.ts --outfile dist/setup.js --minify --target bun"
+  },
+  "bin": {
+    "network-monitor": "bun run bin/monitor.ts",
+    "setup-systemd": "bun run bin/setup.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "zod": "^3.24.1"

@@ -6,41 +6,51 @@ import {
   storeResult,
   closeDatabase,
   cleanupOldResults,
-} from "./database";
+} from "../database";
+import { loadConfig } from "../config";
 
 import type {
-  ServiceConfig,
   ServiceState,
-  SpeedTestResult,
+  SpeedtestMetrics,
   HealthStatus,
-  SpeedTestData
-} from "./types";
+  SpeedtestData
+} from "../types";
 
 /**
- * Service class managing the speed test monitoring
+ * Service class managing network speed test monitoring and execution
+ * 
+ * Handles speed test scheduling, execution, error handling, and circuit breaking
+ * to prevent excessive resource usage during failures.
+ * 
+ * @example
+ * ```typescript
+ * const service = new SpeedTestService();
+ * await service.start();
+ * ```
  */
 export class SpeedTestService {
-  private readonly config: ServiceConfig;
-  private state: ServiceState;
-  private startTime: number;
-
-  constructor(config: ServiceConfig) {
-    this.config = config;
-    this.startTime = Date.now();
-    this.state = {
-      isRunning: false,
-      lastTestTime: 0,
-      consecutiveFailures: 0,
-      isCircuitBroken: false,
-      circuitBreakerResetTime: null,
-      db: null,
-    };
-  }
+  private readonly startTime = Date.now();
+  private readonly config = loadConfig();
+  private state: ServiceState = {
+    isRunning: false,
+    lastTestTime: 0,
+    consecutiveFailures: 0,
+    isCircuitBroken: false,
+    circuitBreakerResetTime: null,
+    db: null,
+  };
 
   /**
-   * Initialize the service
+   * Initialize the speed test service and set up signal handlers
+   * 
+   * @throws {Error} If service initialization fails
+   * 
+   * @example
+   * ```typescript
+   * await service.initialize();
+   * ```
    */
-  public async initialize() {
+  private async initialize() {
     try {
       this.state.db = initializeDatabase(this.config.dbPath);
       this.state.isRunning = true;
@@ -59,12 +69,20 @@ export class SpeedTestService {
   }
 
   /**
-   * Start the service main loop
+   * Start the speed test monitoring service main loop
+   * 
+   * Continuously runs speed tests based on configured intervals,
+   * handles errors, and implements circuit breaking for failure scenarios.
+   * 
+   * @throws {Error} If service initialization fails
+   * 
+   * @example
+   * ```typescript
+   * await service.start();
+   * ```
    */
   public async start() {
-    if (!this.state.isRunning || !this.state.db) {
-      throw new Error("Service not properly initialized");
-    }
+    if (!this.state.isRunning || !this.state.db) await this.initialize();
 
     while (this.state.isRunning) {
       try {
@@ -91,15 +109,10 @@ export class SpeedTestService {
         await this.runTest();
 
         // Cleanup old results periodically
-        if (this.state.db) {
-          cleanupOldResults(this.state.db);
-        }
+        if (this.state.db) cleanupOldResults(this.state.db);
 
         // Force garbage collection hint
-        if (global.gc) {
-          global.gc();
-        }
-
+        if (global.gc) global.gc();
       } catch (error) {
         console.error("Error in service loop:", error);
         await this.handleError();
@@ -108,7 +121,16 @@ export class SpeedTestService {
   }
 
   /**
-   * Run a single speed test
+   * Execute a single speed test iteration
+   * 
+   * Attempts to run the speed test with configured retries and backoff delays
+   * 
+   * @throws {Error} If all retry attempts fail
+   * 
+   * @example
+   * ```typescript
+   * await service.runTest();
+   * ```
    */
   private async runTest() {
     if (!this.state.db) return;
@@ -141,17 +163,24 @@ export class SpeedTestService {
       }
     }
 
-    if (!success) {
-      await this.handleError();
-    }
+    if (!success) await this.handleError();
   }
 
   /**
-   * Execute the speed test and return results
+   * Execute the speed test command and process its results
+   * 
+   * @returns Processed speed test results with calculated metrics
+   * @throws {Error} If the speed test command fails or returns invalid data
+   * 
+   * @example
+   * ```typescript
+   * const result = await service.executeSpeedTest();
+   * console.log(`Download speed: ${result.download} Mbps`);
+   * ```
    */
   private async executeSpeedTest() {
     const proc = Bun.spawn({
-      cmd: [ "speedtest-ookla", "--format=json" ],
+      cmd: [ "speedtest", "--format=json" ],
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -159,6 +188,7 @@ export class SpeedTestService {
     const exitCode = await proc.exited;
     if (exitCode !== 0) {
       const stderr = await new Response(proc.stderr).text();
+
       throw new Error(`Speedtest failed with exit code ${exitCode}: ${stderr}`);
     }
 
@@ -167,9 +197,9 @@ export class SpeedTestService {
       throw new Error("No output received from speedtest command");
     }
 
-    const data = JSON.parse(output) as SpeedTestData;
+    const data = JSON.parse(output) as SpeedtestData;
 
-    return {
+    const result: SpeedtestMetrics = {
       timestamp: new Date().toISOString(),
       ping: data.ping?.latency ?? 0,
       download: data.download?.bandwidth ? (data.download.bandwidth * 8) / 1e6 : 0,
@@ -188,11 +218,23 @@ export class SpeedTestService {
         data.packetLoss ?? 0
       ),
       device_name: hostname(),
-    } as SpeedTestResult;
+    };
+
+    return result;
   }
 
   /**
-   * Handle errors and implement circuit breaker pattern
+   * Handle service errors and implement circuit breaker pattern
+   * 
+   * Tracks consecutive failures and triggers circuit breaker when threshold is reached
+   * 
+   * @example
+   * ```typescript
+   * await service.handleError();
+   * if (service.state.isCircuitBroken) {
+   *   console.log("Circuit breaker activated");
+   * }
+   * ```
    */
   private async handleError() {
     this.state.consecutiveFailures++;
@@ -206,7 +248,15 @@ export class SpeedTestService {
   }
 
   /**
-   * Get current service health status
+   * Get current health status of the speed test service
+   * 
+   * @returns Health status object containing service metrics and state
+   * 
+   * @example
+   * ```typescript
+   * const health = service.getHealth();
+   * console.log(`Service status: ${health.status}`);
+   * ```
    */
   public getHealth(): HealthStatus {
     const status = this.determineHealthStatus();
@@ -221,7 +271,14 @@ export class SpeedTestService {
   }
 
   /**
-   * Determine current health status
+   * Determine current service health status based on state
+   * 
+   * @returns Health status string: 'healthy', 'degraded', or 'unhealthy'
+   * 
+   * @example
+   * ```typescript
+   * const status = service.determineHealthStatus();
+   * ```
    */
   private determineHealthStatus() {
     if (!this.state.isRunning) return 'unhealthy';
@@ -231,13 +288,20 @@ export class SpeedTestService {
   }
 
   /**
-   * Determine network type
+   * Detect the type of network interface being used
+   * 
+   * @returns Network type string: 'wifi', 'ethernet', 'cellular', or 'unknown'
+   * 
+   * @example
+   * ```typescript
+   * const networkType = service.detectNetworkType();
+   * ```
    */
   private detectNetworkType() {
     const interfaces = networkInterfaces();
 
-    for (const [ name, addrs ] of Object.entries(interfaces)) {
-      if (!addrs) continue;
+    for (const [ name, address ] of Object.entries(interfaces)) {
+      if (!address) continue;
 
       if (name.toLowerCase().includes('wlan') || name.toLowerCase().includes('wifi')) {
         return 'wifi';
@@ -254,7 +318,17 @@ export class SpeedTestService {
   }
 
   /**
-   * Determine connection quality
+   * Determine connection quality based on speed test metrics
+   * 
+   * @param ping Network latency in milliseconds
+   * @param jitter Latency variation in milliseconds
+   * @param packetLoss Packet loss percentage
+   * @returns Connection quality string: 'excellent', 'good', 'fair', or 'poor'
+   * 
+   * @example
+   * ```typescript
+   * const quality = service.determineConnectionQuality(20, 5, 0.1);
+   * ```
    */
   private determineConnectionQuality(ping: number, jitter: number, packetLoss: number) {
     if (ping < 20 && jitter < 5 && packetLoss < 0.1) return 'excellent';
@@ -264,14 +338,29 @@ export class SpeedTestService {
   }
 
   /**
-   * Sleep for specified duration
+   * Sleep for a specified duration
+   * 
+   * @param ms Time to sleep in milliseconds
+   * @returns Promise that resolves after the specified duration
+   * 
+   * @example
+   * ```typescript
+   * await service.sleep(1000); // Sleep for 1 second
+   * ```
    */
   private async sleep(ms: number) {
     await new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
-   * Shutdown the service
+   * Gracefully shutdown the speed test service
+   * 
+   * Closes database connections and exits the process
+   * 
+   * @example
+   * ```typescript
+   * await service.shutdown();
+   * ```
    */
   public async shutdown(): Promise<void> {
     console.log("Shutting down speed test service...");

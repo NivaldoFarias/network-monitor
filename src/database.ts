@@ -1,12 +1,21 @@
-import type { SpeedTestResult } from "./types";
+import type { SpeedtestMetrics } from "./types";
 
 import { Database } from "bun:sqlite";
 
 /**
- * Initialize and return a database connection
+ * Initialize and return a SQLite database connection with WAL mode enabled.
+ * 
+ * @param path The path to the SQLite database file.
+ * @returns A configured SQLite database connection with the speed_results table created.
+ * @throws {Error} If database initialization fails.
+ * 
+ * @example
+ * ```typescript
+ * const database = initializeDatabase("./speedtest.db");
+ * ```
  */
-export function initializeDatabase(dbPath: string) {
-  const database = new Database(dbPath);
+export function initializeDatabase(path: string) {
+  const database = new Database(path);
 
   // Enable WAL mode for better concurrency
   database.run("PRAGMA journal_mode = WAL");
@@ -38,9 +47,25 @@ export function initializeDatabase(dbPath: string) {
 
 /**
  * Store a speed test result in the database
+ * 
+ * @param database The active SQLite database connection
+ * @param result The speed test result object to store
+ * @throws {Error} If the insert operation fails
+ * 
+ * @example
+ * ```typescript
+ * const result = {
+ *   timestamp: new Date().toISOString(),
+ *   ping: 15.4,
+ *   download: 100.5,
+ *   // ... other fields
+ * };
+ * 
+ * storeResult(database, result);
+ * ```
  */
-export function storeResult(db: Database, result: SpeedTestResult) {
-  const statement = db.prepare(`
+export function storeResult(database: Database, result: SpeedtestMetrics) {
+  const statement = database.prepare(`
     INSERT INTO speed_results (
       timestamp, ping, download, upload, network_ssid, network_type,
       ip_address, server_id, server_location, isp, latency_jitter,
@@ -67,32 +92,37 @@ export function storeResult(db: Database, result: SpeedTestResult) {
 }
 
 /**
- * Get the last test result from the database
+ * Retrieve the most recent speed test result from the database
+ * 
+ * @param database The active SQLite database connection
+ * @returns The most recent speed test result or null if no results exist
+ * @throws {Error} If the query operation fails
+ * 
+ * @example
+ * ```typescript
+ * const lastResult = getLastResult(database);
+ * if (lastResult) {
+ *   console.log(`Last test ping: ${lastResult.ping}ms`);
+ * }
+ * ```
  */
-export function getLastResult(db: Database) {
-  const row = db.query("SELECT * FROM speed_results ORDER BY timestamp DESC LIMIT 1").get() as SpeedTestResult;
-  if (!row) return null;
-
-  return {
-    timestamp: row.timestamp,
-    ping: row.ping,
-    download: row.download,
-    upload: row.upload,
-    networkSsid: row.network_ssid,
-    networkType: row.network_type,
-    ipAddress: row.ip_address,
-    serverId: row.server_id,
-    serverLocation: row.server_location,
-    isp: row.isp,
-    latencyJitter: row.latency_jitter,
-    packetLoss: row.packet_loss,
-    connectionQuality: row.connection_quality,
-    deviceName: row.device_name,
-  };
+export function getLastResult(database: Database) {
+  return database
+    .query("SELECT * FROM speed_results ORDER BY timestamp DESC LIMIT 1")
+    .get() as SpeedtestMetrics | null;
 }
 
 /**
- * Clean up old test results (keep last 30 days)
+ * Remove speed test results older than 30 days from the database
+ * 
+ * @param database The active SQLite database connection
+ * @throws {Error} If the delete operation fails
+ * 
+ * @example
+ * ```typescript
+ * // Clean up old records
+ * cleanupOldResults(database);
+ * ```
  */
 export function cleanupOldResults(database: Database) {
   const thirtyDaysAgo = new Date();
@@ -102,14 +132,23 @@ export function cleanupOldResults(database: Database) {
 }
 
 /**
- * Safely close the database connection
+ * Safely close the database connection and handle any errors
+ * 
+ * @param database The database connection to close, can be null
+ * @throws {Error} If closing the connection fails (error will be logged)
+ * 
+ * @example
+ * ```typescript
+ * closeDatabase(database);
+ * database = null;
+ * ```
  */
 export function closeDatabase(database: Database | null) {
-  if (database) {
-    try {
-      database.close();
-    } catch (error) {
-      console.error("Error closing database:", error);
-    }
+  if (!database) return;
+
+  try {
+    database.close();
+  } catch (error) {
+    console.error("Error closing database:", error);
   }
-} 
+}
