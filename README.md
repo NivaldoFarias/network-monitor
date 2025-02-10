@@ -30,7 +30,7 @@ A lightweight network monitor that runs as a systemd service and stores results 
 You'll need these dependencies:
 
 1. [Bun Runtime](https://bun.sh/docs/installation)
-2. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli) *(optional, will be installed automatically if not found)*
+2. [Ookla's Speedtest CLI](https://www.speedtest.net/apps/cli) _(optional, will be installed automatically if not found)_
 
 ## Installation
 
@@ -58,6 +58,7 @@ bun run bin/setup.ts --force
 ```
 
 The setup script will automatically:
+
 - Generate the systemd service file
 - Setup log files with appropriate permissions
 - Install and enable the service
@@ -83,15 +84,15 @@ tail -f /var/log/network-monitor.error.log
 
 The service can be configured through environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| SPEEDTEST_VERBOSE | Enable verbose logging | false |
-| SPEEDTEST_INTERVAL | Test interval in milliseconds | 1800000 (30 min) |
-| SPEEDTEST_MAX_RETRIES | Maximum retry attempts | 3 |
-| SPEEDTEST_BACKOFF_DELAY | Base delay for exponential backoff | 5000 (5s) |
-| SPEEDTEST_MAX_BACKOFF_DELAY | Maximum backoff delay | 300000 (5min) |
-| SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD | Failures before circuit breaks | 5 |
-| SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT | Circuit breaker reset time | 1800000 (30min) |
+| Variable                            | Description                        | Default          |
+| ----------------------------------- | ---------------------------------- | ---------------- |
+| SPEEDTEST_VERBOSE                   | Enable verbose logging             | false            |
+| SPEEDTEST_INTERVAL                  | Test interval in milliseconds      | 1800000 (30 min) |
+| SPEEDTEST_MAX_RETRIES               | Maximum retry attempts             | 3                |
+| SPEEDTEST_BACKOFF_DELAY             | Base delay for exponential backoff | 5000 (5s)        |
+| SPEEDTEST_MAX_BACKOFF_DELAY         | Maximum backoff delay              | 300000 (5min)    |
+| SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD | Failures before circuit breaks     | 5                |
+| SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT   | Circuit breaker reset time         | 1800000 (30min)  |
 
 To modify these settings:
 
@@ -131,23 +132,23 @@ bun run bin/setup.ts
 
 The SQLite database is stored in `~/.local/share/network-monitor/speedtest.db` (following XDG base directory specification) and contains a single table `speed_results` with the following schema:
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER | Primary key |
-| timestamp | TEXT | ISO 8601 timestamp |
-| ping | REAL | Latency in milliseconds |
-| download | REAL | Download speed in Mbps |
-| upload | REAL | Upload speed in Mbps |
-| network_ssid | TEXT | WiFi network SSID (if applicable) |
-| network_type | TEXT | Connection type (wifi/ethernet/cellular) |
-| ip_address | TEXT | External IP address |
-| server_id | TEXT | Speedtest server identifier |
-| server_location | TEXT | Server location (city, country) |
-| isp | TEXT | Internet Service Provider name |
-| latency_jitter | REAL | Jitter in milliseconds |
-| packet_loss | REAL | Packet loss percentage |
-| connection_quality | TEXT | Overall quality rating |
-| device_name | TEXT | System hostname |
+| Column             | Type    | Description                              |
+| ------------------ | ------- | ---------------------------------------- |
+| id                 | INTEGER | Primary key                              |
+| timestamp          | TEXT    | ISO 8601 timestamp                       |
+| ping               | REAL    | Latency in milliseconds                  |
+| download           | REAL    | Download speed in Mbps                   |
+| upload             | REAL    | Upload speed in Mbps                     |
+| network_ssid       | TEXT    | WiFi network SSID (if applicable)        |
+| network_type       | TEXT    | Connection type (wifi/ethernet/cellular) |
+| ip_address         | TEXT    | External IP address                      |
+| server_id          | TEXT    | Speedtest server identifier              |
+| server_location    | TEXT    | Server location (city, country)          |
+| isp                | TEXT    | Internet Service Provider name           |
+| latency_jitter     | REAL    | Jitter in milliseconds                   |
+| packet_loss        | REAL    | Packet loss percentage                   |
+| connection_quality | TEXT    | Overall quality rating                   |
+| device_name        | TEXT    | System hostname                          |
 
 ## Project Structure
 

@@ -1,9 +1,9 @@
 {
-  "name": "@network-monitor/client",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@network-monitor/shared": "workspace:*"
-  }
+	"name": "@network-monitor/client",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@network-monitor/shared": "workspace:*"
+	}
 }

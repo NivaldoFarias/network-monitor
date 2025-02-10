@@ -1,20 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": ".",
-    "composite": true
-  },
-  "references": [
-    {
-      "path": "../../packages/shared"
-    }
-  ],
-  "include": [
-    "src/**/*",
-    "bin/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": ".",
+        "composite": true
+    },
+    "references": [
+        {
+            "path": "../../packages/shared"
+        }
+    ],
+    "include": ["src/**/*", "bin/**/*"],
+    "exclude": ["node_modules"]
 }
