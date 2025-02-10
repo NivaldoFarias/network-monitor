@@ -1,8 +1,8 @@
 import { Database } from "bun:sqlite";
 
-import { getDefaultDbPath } from "./config";
+import { getDatabasePath } from "@network-monitor/shared";
 
-import type { SpeedtestMetrics } from "./types";
+import type { SpeedtestMetrics } from "@network-monitor/shared";
 
 /**
  * Initialize and return a SQLite database connection with WAL mode enabled.
@@ -17,7 +17,7 @@ import type { SpeedtestMetrics } from "./types";
  * ```
  */
 export function initializeDatabase() {
-  const database = new Database(getDefaultDbPath());
+  const database = new Database(getDatabasePath());
 
   // Enable WAL mode for better concurrency
   database.run("PRAGMA journal_mode = WAL");

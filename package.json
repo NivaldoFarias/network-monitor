@@ -1,27 +1,14 @@
 {
   "name": "network-monitor",
+  "private": true,
   "version": "0.0.2",
   "description": "A lightweight network monitor that runs as a systemd service and stores results in SQLite",
   "type": "module",
   "scripts": {
-    "monitor:up": "sudo systemctl start network-monitor",
-    "monitor:down": "sudo systemctl stop network-monitor",
-    "monitor:restart": "sudo systemctl restart network-monitor",
-    "monitor:status": "sudo systemctl status network-monitor",
-    "monitor:logs": "journalctl -u network-monitor -f",
-    "setup": "bun run bin/setup.ts"
+    "typecheck": "tsc --noEmit"
   },
-  "bin": {
-    "network-monitor": "bun run bin/monitor.ts",
-    "setup-systemd": "bun run bin/setup.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.7.3"
-  },
-  "dependencies": {
-    "zod": "^3.24.1"
-  }
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

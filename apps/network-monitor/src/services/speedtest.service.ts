@@ -14,7 +14,7 @@ import type {
   SpeedtestMetrics,
   HealthStatus,
   SpeedtestData
-} from "../types";
+} from "@network-monitor/shared";
 
 /**
  * Service class managing network speed test monitoring and execution

@@ -1,0 +1,24 @@
+{
+  "name": "@network-monitor/service",
+  "version": "0.0.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "monitor:up": "sudo systemctl start network-monitor",
+    "monitor:down": "sudo systemctl stop network-monitor",
+    "monitor:restart": "sudo systemctl restart network-monitor",
+    "monitor:status": "sudo systemctl status network-monitor",
+    "monitor:logs": "journalctl -u network-monitor -f",
+    "setup": "bun run bin/setup.ts",
+    "monitor": "bun run bin/monitor.ts"
+  },
+  "bin": {
+    "network-monitor": "bun run bin/monitor.ts",
+    "setup-systemd": "bun run bin/setup.ts"
+  },
+  "dependencies": {
+    "@network-monitor/shared": "workspace:*"
+  }
+}

@@ -3,7 +3,7 @@ import { join } from "path";
 
 import { loadConfig } from "../config";
 
-import type { SystemdSetupOptions } from "../types";
+import type { SystemdSetupOptions } from "@network-monitor/shared";
 
 /**
  * Service class responsible for managing systemd service installation and configuration

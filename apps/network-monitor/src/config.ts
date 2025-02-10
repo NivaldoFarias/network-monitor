@@ -1,13 +1,9 @@
-import { dirname, join } from "path";
-import { homedir } from "os";
-
 import { z } from "zod";
-import { existsSync, mkdirSync } from "fs";
 
 /**
- * Default configuration values for the speed test monitor service
+ * Default configuration values for the speed test monitor service.
  * 
- * These values are used when no environment variables are provided
+ * These values are used when no environment variables are provided.
  * 
  * @example
  * ```typescript
@@ -32,11 +28,10 @@ export const defaults = {
   circuitBreakerTimeout: 1_800_000,
 } as const;
 
-
 /**
- * Configuration schema for the speed test monitor service
+ * Configuration schema for the speed test monitor service.
  * 
- * Defines and validates all configuration options using Zod
+ * Defines and validates all configuration options using Zod.
  * 
  * @example
  * ```typescript
@@ -56,15 +51,13 @@ export const configSchema = z.object({
   circuitBreakerTimeout: z.coerce.number().positive().default(defaults.circuitBreakerTimeout),
 });
 
-export type ServiceConfig = z.infer<typeof configSchema>;
-
 /**
- * Load and validate configuration from environment variables
+ * Load and validate configuration from environment variables.
  * 
- * Reads configuration from environment variables and validates against schema
+ * Reads configuration from environment variables and validates against schema.
  * 
- * @throws {Error} If configuration validation fails
- * @returns Validated service configuration object
+ * @throws {Error} If configuration validation fails.
+ * @returns Validated service configuration object.
  * 
  * @example
  * ```typescript
@@ -84,30 +77,9 @@ export function loadConfig(): ServiceConfig {
   });
 }
 
-
 /**
  * Default configuration values (these are handled by Zod schema defaults)
  */
 export const DEFAULT_CONFIG = configSchema.parse({});
 
-/**
- * Get the default database path based on XDG specification
- * 
- * Uses XDG_DATA_HOME if available, otherwise falls back to ~/.local/share
- * 
- * @returns The computed default database path
- * 
- * @example
- * ```typescript
- * const dbPath = getDefaultDbPath();
- * console.log(`Database will be stored at: ${dbPath}`);
- * ```
- */
-export function getDefaultDbPath() {
-  const path = join(homedir(), ".local", "share", "network-monitor");
-
-  if (!existsSync(path)) mkdirSync(dirname(path), { recursive: true });
-
-  return join(path, "speedtest.db");
-}
-
+export type ServiceConfig = z.infer<typeof configSchema>;
