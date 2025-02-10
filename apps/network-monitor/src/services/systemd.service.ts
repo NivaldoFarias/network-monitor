@@ -18,8 +18,7 @@ import type { SystemdSetupOptions } from "@network-monitor/shared";
  * ```
  */
 export class SystemdService {
-	private readonly username = import.meta.env["USER"];
-	private readonly projectDir = import.meta.dir;
+	private readonly username = import.meta.env["USER"] ?? "";
 	private readonly options = loadConfig();
 	private readonly constants = {
 		serviceFilePath: "/etc/systemd/system/network-monitor.service",
@@ -41,7 +40,7 @@ export class SystemdService {
 	 * await systemd.setup(true); // Force regeneration
 	 * ```
 	 */
-	public async setup(options: SystemdSetupOptions = {}) {
+	public async setup(options: SystemdSetupOptions = { force: false }) {
 		try {
 			this.validateEnvironment();
 
@@ -300,7 +299,7 @@ Environment=SPEEDTEST_BACKOFF_DELAY=${this.options.backoffDelay}
 Environment=SPEEDTEST_MAX_BACKOFF_DELAY=${this.options.maxBackoffDelay}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_THRESHOLD=${this.options.circuitBreakerThreshold}
 Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.circuitBreakerTimeout}
-ExecStart=${Bun.which("bun")} ${join(projectRoot, "bin/monitor.ts")}
+ExecStart=${Bun.which("bun") || "bun"} ${join(projectRoot, "bin/monitor.ts")}
 Restart=always
 RestartSec=10
 StandardOutput=append:${this.constants.logFilePath}

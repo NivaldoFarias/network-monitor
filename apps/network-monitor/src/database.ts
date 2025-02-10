@@ -13,7 +13,6 @@ import type { SpeedtestMetrics } from "@network-monitor/shared";
  *
  * @param path The path to the SQLite database file.
  * @returns A configured SQLite database connection with the speed_results table created.
- * @throws {Error} If database initialization fails.
  */
 export function initializeDatabase() {
 	const database = new Database(getDatabasePath());
@@ -63,7 +62,6 @@ export function initializeDatabase() {
  *
  * @param database The active SQLite database connection
  * @param result The speed test result object to store
- * @throws {Error} If the insert operation fails
  */
 export function storeResult(database: Database, result: SpeedtestMetrics) {
 	const statement = database.prepare(`
@@ -105,9 +103,8 @@ export function storeResult(database: Database, result: SpeedtestMetrics) {
  *
  * @param database The active SQLite database connection
  * @returns The most recent speed test result or null if no results exist
- * @throws {Error} If the query operation fails
  */
-export function getLastResult(database: Database) {
+export function getLastResult(database: Database): SpeedtestMetrics | null {
 	return database
 		.query("SELECT * FROM speed_results ORDER BY timestamp DESC LIMIT 1")
 		.get() as SpeedtestMetrics | null;
@@ -123,7 +120,6 @@ export function getLastResult(database: Database) {
  * ```
  *
  * @param database The active SQLite database connection
- * @throws {Error} If the delete operation fails
  */
 export function cleanupOldResults(database: Database) {
 	const thirtyDaysAgo = new Date();

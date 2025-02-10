@@ -45,14 +45,14 @@ export class SpeedTestService {
 	 * await service.initialize();
 	 * ```
 	 */
-	private async initialize() {
+	private initialize() {
 		try {
 			this.state.db = initializeDatabase();
 			this.state.isRunning = true;
 
 			// Setup signal handlers
-			process.on("SIGTERM", () => this.shutdown());
-			process.on("SIGINT", () => this.shutdown());
+			process.on("SIGTERM", () => void this.shutdown());
+			process.on("SIGINT", () => void this.shutdown());
 
 			if (this.config.verbose) {
 				console.log("Speed test service initialized");
@@ -77,7 +77,7 @@ export class SpeedTestService {
 	 * ```
 	 */
 	public async start() {
-		if (!this.state.isRunning || !this.state.db) await this.initialize();
+		if (!this.state.isRunning || !this.state.db) this.initialize();
 
 		while (this.state.isRunning) {
 			try {
@@ -113,7 +113,7 @@ export class SpeedTestService {
 				if (global.gc) global.gc();
 			} catch (error) {
 				console.error("Error in service loop:", error);
-				await this.handleError();
+				this.handleError();
 			}
 		}
 	}
@@ -139,6 +139,7 @@ export class SpeedTestService {
 		while (retryCount <= this.config.maxRetries && !success) {
 			try {
 				const result = await this.executeSpeedTest();
+
 				if (result) {
 					storeResult(this.state.db, result);
 					this.state.lastTestTime = Date.now();
@@ -150,6 +151,7 @@ export class SpeedTestService {
 					}
 				}
 			} catch (error) {
+				console.error(`Speed test attempt ${retryCount + 1} failed:`, error);
 				retryCount++;
 				if (retryCount <= this.config.maxRetries) {
 					const backoffDelay = Math.min(
@@ -161,7 +163,7 @@ export class SpeedTestService {
 			}
 		}
 
-		if (!success) await this.handleError();
+		if (!success) this.handleError();
 	}
 
 	/**
@@ -234,7 +236,7 @@ export class SpeedTestService {
 	 * }
 	 * ```
 	 */
-	private async handleError() {
+	private handleError() {
 		this.state.consecutiveFailures++;
 		console.error(`Speed test failed. Consecutive failures: ${this.state.consecutiveFailures}`);
 
@@ -360,7 +362,7 @@ export class SpeedTestService {
 	 * await service.shutdown();
 	 * ```
 	 */
-	public async shutdown(): Promise<void> {
+	public shutdown(): Promise<void> {
 		console.log("Shutting down speed test service...");
 		this.state.isRunning = false;
 		closeDatabase(this.state.db);

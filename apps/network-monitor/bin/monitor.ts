@@ -6,7 +6,7 @@ if (import.meta.main) {
 		const service = new SpeedTestService();
 
 		for (const signal of ["SIGTERM", "SIGINT", "SIGQUIT"]) {
-			process.on(signal, () => service.shutdown());
+			process.on(signal, () => void service.shutdown());
 		}
 
 		await service.start();
