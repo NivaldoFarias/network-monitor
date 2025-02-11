@@ -20,9 +20,7 @@ export const services = new Elysia({ prefix: "/services" })
 			return { status };
 		},
 		{
-			params: t.Object({
-				name: t.String(),
-			}),
+			params: t.Object({ name: t.String() }),
 		},
 	)
 	.post(
@@ -50,9 +48,7 @@ export const services = new Elysia({ prefix: "/services" })
 			return { status };
 		},
 		{
-			params: t.Object({
-				name: t.String(),
-			}),
+			params: t.Object({ name: t.String() }),
 		},
 	)
 	.post(
@@ -66,9 +62,7 @@ export const services = new Elysia({ prefix: "/services" })
 			return { status };
 		},
 		{
-			params: t.Object({
-				name: t.String(),
-			}),
+			params: t.Object({ name: t.String() }),
 		},
 	)
 	.get(
@@ -81,8 +75,6 @@ export const services = new Elysia({ prefix: "/services" })
 			return { logs };
 		},
 		{
-			params: t.Object({
-				name: t.String(),
-			}),
+			params: t.Object({ name: t.String() }),
 		},
 	);

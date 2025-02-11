@@ -2,7 +2,8 @@ import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
 
 import { env } from "./config/env";
-import { localAuth } from "./middleware/local-auth";
+import { localAuth } from "./middleware/authentication";
+import { errorHandler } from "./middleware/errorHandler";
 import { services } from "./routes/services";
 import { AppError } from "./utils/errors";
 
@@ -29,21 +30,22 @@ if (import.meta.main) {
 				},
 			}),
 		)
+		.use(errorHandler)
 		.use(localAuth)
 		.use(services)
-		.onError(({ error, set }) => {
-			console.error(error);
-
-			if (error instanceof AppError) {
-				set.status = error.statusCode;
-				return { error: error.message, statusCode: error.statusCode };
-			}
-
-			set.status = 500;
-			return { error: "Internal Server Error", statusCode: 500 };
-		})
 		.listen({ port: env.port, hostname: env.host });
 
-	console.log(`🚀 Server running at http://${env.host}:${env.port}`);
-	console.log("📚 API documentation available at /swagger");
+	console.log(`
+🚀 Server running at http://${env.host}:${env.port}
+
+Available routes:
+📚 API Documentation: http://${env.host}:${env.port}/swagger
+🔧 Services:
+  GET    http://${env.host}:${env.port}/services
+  GET    http://${env.host}:${env.port}/services/:name
+  POST   http://${env.host}:${env.port}/services/:name/start
+  POST   http://${env.host}:${env.port}/services/:name/stop 
+  POST   http://${env.host}:${env.port}/services/:name/restart
+  GET    http://${env.host}:${env.port}/services/:name/logs
+`);
 }

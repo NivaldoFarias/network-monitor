@@ -41,11 +41,10 @@ cp .env.example .env
 
 Edit `.env` file with your configuration.
 
-4. Setup the database:
+4. Setup the systemd service:
 
 ```bash
-mkdir -p data
-bun run setup
+bunx @network-monitor/server setup-systemd
 ```
 
 ## Development

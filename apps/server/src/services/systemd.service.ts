@@ -37,12 +37,14 @@ export class SystemdService {
 	 * @returns The output of the systemctl command
 	 */
 	private async executeSystemctl(args: string[]) {
-		const proc = Bun.spawn(["systemctl", ...args], {
+		const proc = Bun.spawn(["sudo", "systemctl", ...args], {
 			stderr: "pipe",
 		});
 
 		const output = await new Response(proc.stdout).text();
 		const error = await new Response(proc.stderr).text();
+
+		console.log(proc.exitCode);
 
 		if (proc.exitCode !== 0) {
 			throw new ValidationError(error || "Failed to execute systemctl command");
