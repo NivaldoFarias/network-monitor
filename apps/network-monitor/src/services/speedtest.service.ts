@@ -1,7 +1,5 @@
 import { hostname, networkInterfaces } from "os";
 
-import { loadConfig } from "../config";
-import { cleanupOldResults, closeDatabase, initializeDatabase, storeResult } from "../database";
 import Bun from "bun";
 
 import type {
@@ -10,6 +8,9 @@ import type {
 	SpeedtestData,
 	SpeedtestMetrics,
 } from "@network-monitor/shared";
+
+import { loadConfig } from "../config";
+import { cleanupOldResults, closeDatabase, initializeDatabase, storeResult } from "../database";
 
 /**
  * Service class managing network speed test monitoring and execution
@@ -140,15 +141,13 @@ export class SpeedTestService {
 			try {
 				const result = await this.executeSpeedTest();
 
-				if (result) {
-					storeResult(this.state.db, result);
-					this.state.lastTestTime = Date.now();
-					this.state.consecutiveFailures = 0;
-					success = true;
+				storeResult(this.state.db, result);
+				this.state.lastTestTime = Date.now();
+				this.state.consecutiveFailures = 0;
+				success = true;
 
-					if (this.config.verbose) {
-						console.log(`Speed test completed successfully at ${new Date().toISOString()}`);
-					}
+				if (this.config.verbose) {
+					console.log(`Speed test completed successfully at ${new Date().toISOString()}`);
 				}
 			} catch (error) {
 				console.error(`Speed test attempt ${retryCount + 1} failed:`, error);
@@ -201,21 +200,21 @@ export class SpeedTestService {
 
 		const result: SpeedtestMetrics = {
 			timestamp: new Date().toISOString(),
-			ping: data.ping?.latency ?? 0,
+			ping: data.ping?.latency || 0,
 			download: data.download?.bandwidth ? (data.download.bandwidth * 8) / 1e6 : 0,
 			upload: data.upload?.bandwidth ? (data.upload.bandwidth * 8) / 1e6 : 0,
 			network_ssid: data.interface?.name ?? null,
 			network_type: this.detectNetworkType(),
 			ip_address: data.interface?.externalIp ?? "unknown",
-			server_id: data.server?.id?.toString() ?? "unknown",
+			server_id: data.server?.id.toString() ?? "unknown",
 			server_location: `${data.server?.name ?? "unknown"}, ${data.server?.country ?? "unknown"}`,
-			isp: data.isp ?? "unknown",
-			latency_jitter: data.ping?.jitter ?? 0,
-			packet_loss: data.packetLoss ?? 0,
+			isp: data.isp || "unknown",
+			latency_jitter: data.ping?.jitter || 0,
+			packet_loss: data.packetLoss || 0,
 			connection_quality: this.determineConnectionQuality(
 				data.ping?.latency ?? 0,
 				data.ping?.jitter ?? 0,
-				data.packetLoss ?? 0,
+				data.packetLoss || 0,
 			),
 			device_name: hostname(),
 		};

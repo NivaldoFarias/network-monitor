@@ -5,11 +5,10 @@ import { env } from "./config/env";
 import { localAuth } from "./middleware/authentication";
 import { errorHandler } from "./middleware/errorHandler";
 import { services } from "./routes/services";
-import { AppError } from "./utils/errors";
 
 if (import.meta.main) {
 	/** Main application setup */
-	const app = new Elysia()
+	const _app = new Elysia()
 		.use(
 			swagger({
 				documentation: {

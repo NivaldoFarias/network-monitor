@@ -76,28 +76,28 @@ export interface HealthStatus {
 export interface SpeedtestData {
     type: string;
     timestamp: string;
-    ping: {
+    ping?: {
         jitter: number;
         latency: number;
         low: number;
         high: number;
     };
-    download: {
+    download?: {
         bandwidth: number;
         bytes: number;
         elapsed: number;
-        latency: {
+        latency?: {
             iqm: number;
             low: number;
             high: number;
             jitter: number;
         };
     };
-    upload: {
+    upload?: {
         bandwidth: number;
         bytes: number;
         elapsed: number;
-        latency: {
+        latency?: {
             iqm: number;
             low: number;
             high: number;
@@ -106,14 +106,14 @@ export interface SpeedtestData {
     };
     packetLoss: number;
     isp: string;
-    interface: {
+    interface?: {
         internalIp: string;
         name: string;
         macAddr: string;
         isVpn: boolean;
         externalIp: string;
     };
-    server: {
+    server?: {
         id: number;
         host: string;
         port: number;
@@ -122,7 +122,7 @@ export interface SpeedtestData {
         country: string;
         ip: string;
     };
-    result: {
+    result?: {
         id: string;
         url: string;
         persisted: boolean;
