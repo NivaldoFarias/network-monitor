@@ -1,27 +1,33 @@
 {
-  "name": "network-monitor",
-  "version": "0.0.2",
-  "description": "A lightweight network monitor that runs as a systemd service and stores results in SQLite",
-  "type": "module",
-  "scripts": {
-    "monitor:up": "sudo systemctl start network-monitor",
-    "monitor:down": "sudo systemctl stop network-monitor",
-    "monitor:restart": "sudo systemctl restart network-monitor",
-    "monitor:status": "sudo systemctl status network-monitor",
-    "monitor:logs": "journalctl -u network-monitor -f",
-    "setup": "bun run bin/setup.ts"
-  },
-  "bin": {
-    "network-monitor": "bun run bin/monitor.ts",
-    "setup-systemd": "bun run bin/setup.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.7.3"
-  },
-  "dependencies": {
-    "zod": "^3.24.1"
-  }
+	"name": "network-monitor",
+	"private": true,
+	"version": "0.0.3",
+	"type": "module",
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"format": "prettier . --write",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"setup": "bunx @network-monitor/server setup-systemd",
+		"monitor": "bunx @network-monitor/server monitor"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"devDependencies": {
+		"@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+		"@total-typescript/ts-reset": "^0.6.1",
+		"@types/bun": "latest",
+		"@typescript-eslint/eslint-plugin": "^8.22.0",
+		"@typescript-eslint/parser": "^8.22.0",
+		"eslint": "^9.19.0",
+		"eslint-config-prettier": "^10.0.1",
+		"eslint-plugin-prettier": "^5.2.3",
+		"globals": "^15.14.0",
+		"jiti": "^2.4.2",
+		"prettier": "^3.4.2",
+		"typescript": "^5.7.3",
+		"typescript-eslint": "^8.22.0"
+	}
 }

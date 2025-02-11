@@ -1,0 +1,13 @@
+{
+	"name": "@network-monitor/shared",
+	"private": true,
+	"version": "0.0.3",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^3.24.1"
+	}
+}

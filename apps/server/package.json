@@ -1,0 +1,24 @@
+{
+	"name": "@network-monitor/server",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun run --watch src/index.ts",
+		"start": "bun run src/index.ts",
+		"build": "bun build ./src/index.ts --outdir ./dist --target bun",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint . --ext .ts",
+		"format": "prettier --write ."
+	},
+	"dependencies": {
+		"@elysiajs/cors": "^0.8.0",
+		"@elysiajs/jwt": "^0.8.0",
+		"@elysiajs/swagger": "^0.8.0",
+		"elysia": "^0.8.0",
+		"@network-monitor/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^20.0.0"
+	}
+}
