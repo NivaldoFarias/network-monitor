@@ -1,5 +1,7 @@
 # Network Monitor
 
+> ⚠️ **Work in Progress**: This project is under active development. Features and documentation may change frequently.
+
 A lightweight network monitor that runs as a systemd service and stores results in SQLite. Built with TypeScript and Bun runtime, it provides comprehensive network speed monitoring with robust error handling and data persistence.
 
 ## Features
@@ -121,8 +123,14 @@ sudo systemctl restart network-monitor
 For development and testing:
 
 ```bash
-# Run the monitor directly
-bun run bin/monitor.ts
+# Install dependencies
+bun install
+
+# Run the monitor service
+bun run apps/network-monitor/src/index.ts
+
+# Run the API server
+bun run apps/server/src/index.ts
 
 # Setup systemd service
 bun run bin/setup.ts
@@ -152,23 +160,39 @@ The SQLite database is stored in `~/.local/share/network-monitor/speedtest.db` (
 
 ## Project Structure
 
+This is a monorepo containing multiple applications and shared packages:
+
 ```plaintext
 .
-├── bin/
-│   ├── monitor.ts               # Service entry point
-│   └── setup.ts                 # Systemd setup script
-├── src/
-│   ├── services/
-│   │   ├── speedtest.service.ts # Core speed test implementation
-│   │   └── systemd.service.ts   # Systemd service management
-│   ├── config.ts               # Configuration management
-│   ├── database.ts             # Database operations
-│   └── types.d.ts             # TypeScript type definitions
-├── .env.example               # Environment variables template
-├── package.json              # Project configuration
-├── tsconfig.json            # TypeScript configuration
-└── README.md               # Documentation
+├── apps/
+│   ├── server/           # Backend API server
+│   ├── network-monitor/  # Core network monitoring service
+│   └── client/           # Web interface (planned)
+├── packages/
+│   └── shared/           # Shared types and utilities
+└── config files...       # Various configuration files
 ```
+
+## Project Structure Details
+
+### Apps
+
+- **server**: REST API for data access and service management
+- **network-monitor**: Core monitoring service that runs the speed tests
+- **client**: Web interface for visualizing network data (planned)
+
+### Packages
+
+- **shared**: Common types, utilities, and interfaces used across apps
+
+### Configuration
+
+The project uses several configuration files:
+
+- `.env`: Environment variables for development
+- `eslint.config.ts`: ESLint configuration
+- `prettier.config.mjs`: Prettier formatting rules
+- `tsconfig.json`: TypeScript configuration
 
 ## Contributing
 

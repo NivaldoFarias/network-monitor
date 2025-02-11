@@ -1,0 +1,146 @@
+import { ValidationError } from "../utils/errors";
+import Bun from "bun";
+
+/**
+ * Type definition for systemd service status
+ */
+export type ServiceStatus = {
+	/** The name of the service */
+	name: string;
+	/** The description of the service */
+	description: string;
+	/** The load state of the service */
+	loadState: string;
+	/** The active state of the service */
+	activeState: string;
+	/** The sub state of the service */
+	subState: string;
+	/** The unit file of the service */
+	unitFile: string;
+};
+
+/**
+ * Service class for handling systemd operations
+ *
+ * @example
+ * ```typescript
+ * const systemd = new SystemdService();
+ * const status = await systemd.getStatus("my-service");
+ * console.log(status);
+ * ```
+ */
+export class SystemdService {
+	/**
+	 * Executes a systemctl command and returns its output
+	 *
+	 * @param args The arguments to pass to systemctl
+	 * @returns The output of the systemctl command
+	 */
+	private async executeSystemctl(args: string[]) {
+		const proc = Bun.spawn(["systemctl", ...args], {
+			stderr: "pipe",
+		});
+
+		const output = await new Response(proc.stdout).text();
+		const error = await new Response(proc.stderr).text();
+
+		if (proc.exitCode !== 0) {
+			throw new ValidationError(error || "Failed to execute systemctl command");
+		}
+
+		return output.trim();
+	}
+
+	/**
+	 * Gets the status of a systemd service
+	 *
+	 * @param serviceName The name of the service to get the status of
+	 * @returns The status of the service
+	 */
+	public async getStatus(serviceName: string) {
+		const output = await this.executeSystemctl([
+			"show",
+			serviceName,
+			"--property=Description,LoadState,ActiveState,SubState,UnitFile",
+		]);
+
+		const properties = output.split("\n").reduce<Record<string, string>>((acc, line) => {
+			const [key, value] = line.split("=");
+			return { ...acc, [key]: value };
+		}, {});
+
+		const status: ServiceStatus = {
+			name: serviceName,
+			description: properties.Description || "",
+			loadState: properties.LoadState || "",
+			activeState: properties.ActiveState || "",
+			subState: properties.SubState || "",
+			unitFile: properties.UnitFile || "",
+		};
+
+		return status;
+	}
+
+	/**
+	 * Starts a systemd service
+	 *
+	 * @param serviceName The name of the service to start
+	 * @returns The status of the service after starting it
+	 */
+	public async startService(serviceName: string) {
+		await this.executeSystemctl(["start", serviceName]);
+		return this.getStatus(serviceName);
+	}
+
+	/**
+	 * Stops a systemd service
+	 *
+	 * @param serviceName The name of the service to stop
+	 * @returns The status of the service after stopping it
+	 */
+	public async stopService(serviceName: string) {
+		await this.executeSystemctl(["stop", serviceName]);
+		return this.getStatus(serviceName);
+	}
+
+	/**
+	 * Restarts a systemd service
+	 *
+	 * @param serviceName The name of the service to restart
+	 * @returns The status of the service after restarting it
+	 */
+	public async restartService(serviceName: string) {
+		await this.executeSystemctl(["restart", serviceName]);
+		return this.getStatus(serviceName);
+	}
+
+	/**
+	 * Lists all systemd services
+	 *
+	 * @returns An array of all systemd services
+	 */
+	public async listServices() {
+		const output = await this.executeSystemctl([
+			"list-units",
+			"--type=service",
+			"--all",
+			"--no-pager",
+			"--plain",
+		]);
+
+		return output
+			.split("\n")
+			.slice(1) // Skip header
+			.filter(Boolean)
+			.map((line) => {
+				const [unit, load, active, sub, description] = line.split(/\s+/);
+				return {
+					name: unit.replace(".service", ""),
+					loadState: load,
+					activeState: active,
+					subState: sub,
+					description: description || "",
+				};
+			});
+	}
+}
