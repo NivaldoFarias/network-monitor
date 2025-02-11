@@ -53,10 +53,10 @@ cp .env.example .env
 
 ```bash
 # Regular setup
-bun run bin/setup.ts
+bunx @network-monitor/server setup-systemd
 
 # Force setup (overwrites existing service)
-bun run bin/setup.ts --force
+bunx @network-monitor/server setup-systemd --force
 ```
 
 The setup script will automatically:
@@ -69,6 +69,8 @@ The setup script will automatically:
 ## Service Management
 
 ### Checking Status
+
+Native systemd commands:
 
 ```bash
 # View service status

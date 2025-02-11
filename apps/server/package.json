@@ -8,7 +8,8 @@
 		"start": "bun run src/index.ts",
 		"build": "bun build ./src/index.ts --outdir ./dist --target bun",
 		"typecheck": "tsc --noEmit",
-		"lint": "eslint . --ext .ts"
+		"lint": "eslint . --ext .ts",
+		"format": "prettier --write ."
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^0.8.0",

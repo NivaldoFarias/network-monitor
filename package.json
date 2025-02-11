@@ -1,14 +1,15 @@
 {
 	"name": "network-monitor",
 	"private": true,
-	"version": "0.0.2",
-	"description": "A lightweight network monitor that runs as a systemd service and stores results in SQLite",
+	"version": "0.0.3",
 	"type": "module",
 	"scripts": {
 		"typecheck": "tsc --noEmit",
 		"format": "prettier . --write",
 		"lint": "eslint .",
-		"lint:fix": "eslint . --fix"
+		"lint:fix": "eslint . --fix",
+		"setup": "bunx @network-monitor/server setup-systemd",
+		"monitor": "bunx @network-monitor/server monitor"
 	},
 	"workspaces": [
 		"apps/*",
