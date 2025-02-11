@@ -1,5 +1,6 @@
-import { AppError, NotFoundError } from "../utils/errors";
 import { Elysia, NotFoundError as ElysiaNotFoundError } from "elysia";
+
+import { AppError, NotFoundError } from "../utils/errors";
 
 /**
  * Interface defining the structure of error responses

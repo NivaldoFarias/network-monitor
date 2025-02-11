@@ -1,12 +1,13 @@
+import { Elysia } from "elysia";
+
 import { env } from "../config/env";
 import { ForbiddenError, UnauthorizedError } from "../utils/errors";
-import { Elysia } from "elysia";
 
 /**
  * Stores the server's authentication token
- * Generated at startup and stored in memory only
+ * Generated at startup and stored in environment variable only
  */
-const AUTH_TOKEN = crypto.randomUUID();
+const AUTH_TOKEN = env.authToken;
 
 // Log the token only in development for testing
 if (env.isDevelopment) {

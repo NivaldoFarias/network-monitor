@@ -5,7 +5,7 @@ import { getDatabasePath } from "@network-monitor/shared";
  * @throws {Error} If required environment variables are missing
  */
 function validateEnv() {
-	const requiredEnvVars = ["PORT", "HOST", "NODE_ENV"] as const;
+	const requiredEnvVars = ["PORT", "HOST", "NODE_ENV", "AUTH_TOKEN"] as const;
 
 	const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
 
@@ -18,6 +18,7 @@ function validateEnv() {
 		host: process.env.HOST ?? "0.0.0.0",
 		databasePath: getDatabasePath(),
 		nodeEnv: process.env.NODE_ENV,
+		authToken: process.env.AUTH_TOKEN || crypto.randomUUID(),
 		isDevelopment: process.env.NODE_ENV === "development",
 		isProduction: process.env.NODE_ENV === "production",
 		isTest: process.env.NODE_ENV === "test",

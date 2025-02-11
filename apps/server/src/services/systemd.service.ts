@@ -1,5 +1,6 @@
-import { ValidationError } from "../utils/errors";
 import Bun from "bun";
+
+import { ValidationError } from "../utils/errors";
 
 /**
  * Type definition for systemd service status
@@ -39,15 +40,19 @@ export class SystemdService {
 	private async executeSystemctl(args: string[]) {
 		const proc = Bun.spawn(["sudo", "systemctl", ...args], {
 			stderr: "pipe",
+			stdout: "pipe",
 		});
 
-		const output = await new Response(proc.stdout).text();
-		const error = await new Response(proc.stderr).text();
+		const [output, error] = await Promise.all([
+			new Response(proc.stdout).text(),
+			new Response(proc.stderr).text(),
+		]);
 
-		console.log(proc.exitCode);
+		const exitCode = await proc.exited;
 
-		if (proc.exitCode !== 0) {
-			throw new ValidationError(error || "Failed to execute systemctl command");
+		if (exitCode !== 0) {
+			const errorMessage = error.trim() || output.trim() || "Failed to execute systemctl command";
+			throw new ValidationError(`systemctl error (exit code ${exitCode}): ${errorMessage}`);
 		}
 
 		return output.trim();
