@@ -14,7 +14,7 @@ if (import.meta.main) {
 				documentation: {
 					info: {
 						title: "Network Monitor API",
-						version: "1.0.0",
+						version: "0.0.1",
 						description: "Local API for managing network monitoring services",
 					},
 					components: {

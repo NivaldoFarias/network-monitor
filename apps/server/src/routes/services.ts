@@ -2,9 +2,11 @@ import { createDatabaseConnection, SYSTEMD } from "@network-monitor/shared";
 import Bun from "bun";
 import { Elysia } from "elysia";
 
+import { SpeedTestService } from "../services/speedtest.service";
 import { SystemdService } from "../services/systemd.service";
 
 const systemd = new SystemdService();
+const speedtest = new SpeedTestService();
 const db = createDatabaseConnection();
 
 /**
@@ -111,6 +113,39 @@ export const services = new Elysia({ prefix: "/services" })
 			}, {});
 
 		return { config: config as unknown as ServiceConfig };
+	})
+	// New endpoints for script operations
+	.post("/setup", async ({ query: { force } }) => {
+		try {
+			await systemd.setup({ force: force === "true" });
+			return { success: true, message: "Service setup completed successfully" };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	})
+	.post("/permissions", async () => {
+		try {
+			await Bun.spawn(["sudo", "bun", "run", "scripts/systemd-permissions.ts"]).exited;
+			return { success: true, message: "Permissions updated successfully" };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	})
+	.post("/monitor/start", async () => {
+		try {
+			await speedtest.start();
+			return { success: true, message: "Network monitoring started" };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	})
+	.post("/monitor/stop", async () => {
+		try {
+			await speedtest.shutdown();
+			return { success: true, message: "Network monitoring stopped" };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
 	});
 // .put(
 // 	"/config",

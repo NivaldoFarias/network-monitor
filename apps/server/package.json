@@ -9,7 +9,20 @@
 		"build": "bun build ./src/index.ts --outdir ./dist --target bun",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint . --ext .ts",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"monitor:up": "sudo systemctl start network-monitor",
+		"monitor:down": "sudo systemctl stop network-monitor",
+		"monitor:restart": "sudo systemctl restart network-monitor",
+		"monitor:status": "sudo systemctl status network-monitor",
+		"monitor:logs": "journalctl -u network-monitor -f",
+		"setup": "bun run scripts/systemd-setup.ts",
+		"monitor": "bun run scripts/network-monitor.ts",
+		"permissions": "bun run scripts/systemd-permissions.ts"
+	},
+	"bin": {
+		"network-monitor": "bun run scripts/network-monitor.ts",
+		"systemd-setup": "bun run scripts/systemd-setup.ts",
+		"systemd-permissions": "bun run scripts/systemd-permissions.ts"
 	},
 	"dependencies": {
 		"@elysiajs/swagger": "^0.8.0",

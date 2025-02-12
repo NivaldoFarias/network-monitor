@@ -36,8 +36,6 @@ const createErrorResponse = (message: string, code: string, statusCode: number):
  */
 export const errorHandler = (app: Elysia) =>
 	app.onError(({ code, error, set }): ErrorResponse => {
-		console.error(error);
-
 		// Handle AppError instances (including NotFoundError)
 		if (error instanceof AppError) {
 			set.status = error.statusCode;
