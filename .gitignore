@@ -8,6 +8,9 @@ speedtest.db*
 .cursorrules
 .cursor/
 
+# VSCode
+.vscode/
+
 # Logs
 logs
 _.log

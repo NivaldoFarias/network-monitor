@@ -25,3 +25,29 @@ export const DEFAULT_CONFIG = {
 	/** Time circuit breaker remains open: 30 minutes (in milliseconds) */
 	circuitBreakerTimeout: 1_800_000,
 } as const;
+
+/**
+ * Constants for the systemd service.
+ *
+ * These values are used for the systemd service.
+ *
+ * @example
+ * ```typescript
+ * import { SYSTEMD } from "@network-monitor/shared";
+ * console.log(`Service file path: ${SYSTEMD.SERVICE_FILE_PATH}`);
+ * ```
+ */
+export const SYSTEMD = {
+	/** The name of the service */
+	SERVICE_NAME: "network-monitor",
+	/** The path to the service file */
+	SERVICE_FILE_PATH: "/etc/systemd/system/network-monitor.service",
+	/** The path to the log file */
+	LOG_FILE_PATH: "/var/log/network-monitor.log",
+	/** The path to the error log file */
+	ERROR_LOG_FILE_PATH: "/var/log/network-monitor.error.log",
+	/** The path to the sudoers file */
+	SUDOERS_FILE: "/etc/sudoers.d/network-monitor",
+	/** The mode of the sudoers file */
+	SUDOERS_FILE_MODE: 0o440,
+} as const;

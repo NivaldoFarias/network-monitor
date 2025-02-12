@@ -1,6 +1,7 @@
 import { join } from "path";
 import process from "process";
 
+import { SYSTEMD } from "@network-monitor/shared";
 import Bun from "bun";
 
 import type { SystemdSetupOptions } from "@network-monitor/shared";
@@ -22,16 +23,8 @@ import { loadConfig } from "../config";
 export class SystemdService {
 	private readonly username = process.env["USER"] ?? "";
 	private readonly options = loadConfig();
-	private readonly constants = {
-		serviceFilePath: "/etc/systemd/system/network-monitor.service",
-		logFilePath: "/var/log/network-monitor.log",
-		errorLogFilePath: "/var/log/network-monitor.error.log",
-		speedtestDownload:
-			"https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz",
-		serviceName: "network-monitor",
-		sudoersFile: "/etc/sudoers.d/network-monitor",
-		sudoersFileMode: 0o440,
-	};
+	private readonly SPEEDTEST_DOWNLOAD_URL =
+		"https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz";
 
 	/**
 	 * Run the complete systemd service setup process.
@@ -82,12 +75,12 @@ export class SystemdService {
 		// Create the sudoers entry
 		const sudoersContent = [
 			"# Permissions for network-monitor service management",
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl status ${this.constants.serviceName}`,
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl start ${this.constants.serviceName}`,
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl stop ${this.constants.serviceName}`,
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl restart ${this.constants.serviceName}`,
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl list-units ${this.constants.serviceName}`,
-			`${currentUser} ALL=NOPASSWD: /bin/systemctl show ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl status ${SYSTEMD.SERVICE_NAME}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl start ${SYSTEMD.SERVICE_NAME}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl stop ${SYSTEMD.SERVICE_NAME}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl restart ${SYSTEMD.SERVICE_NAME}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl list-units ${SYSTEMD.SERVICE_NAME}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl show ${SYSTEMD.SERVICE_NAME}`,
 		].join("\n");
 
 		try {
@@ -97,22 +90,22 @@ export class SystemdService {
 			}
 
 			// Write the sudoers file
-			await Bun.write(this.constants.sudoersFile, sudoersContent, {
-				mode: this.constants.sudoersFileMode,
+			await Bun.write(SYSTEMD.SUDOERS_FILE, sudoersContent, {
+				mode: SYSTEMD.SUDOERS_FILE_MODE,
 			});
-			console.log(`✅ Successfully created sudoers file at ${this.constants.sudoersFile}`);
+			console.log(`✅ Successfully created sudoers file at ${SYSTEMD.SUDOERS_FILE}`);
 
 			// Verify the syntax of the new sudoers file
-			const { exitCode } = await Bun.$`visudo -c -f ${this.constants.sudoersFile}`;
+			const { exitCode } = await Bun.$`visudo -c -f ${SYSTEMD.SUDOERS_FILE}`;
 
 			if (exitCode !== 0) {
 				// If validation fails, remove the file and exit
-				await Bun.$`rm ${this.constants.sudoersFile}`;
+				await Bun.$`rm ${SYSTEMD.SUDOERS_FILE}`;
 				throw new Error("Invalid sudoers file syntax");
 			}
 
 			console.log(`✅ Permissions configured successfully for user ${currentUser}`);
-			console.log(`✅ Service: ${this.constants.serviceName}`);
+			console.log(`✅ Service: ${SYSTEMD.SERVICE_NAME}`);
 		} catch (error) {
 			console.error("❌ Failed to configure permissions:", error);
 			process.exit(1);
@@ -168,7 +161,7 @@ export class SystemdService {
 		const downloadTarFile = Bun.spawnSync([
 			"curl",
 			"-s",
-			this.constants.speedtestDownload,
+			this.SPEEDTEST_DOWNLOAD_URL,
 			"-o",
 			"speedtest.tgz",
 		]);
@@ -219,7 +212,7 @@ export class SystemdService {
 	 * ```
 	 */
 	private async generateServiceFile(force = false) {
-		if (!force && (await Bun.file(this.constants.serviceFilePath).exists())) {
+		if (!force && (await Bun.file(SYSTEMD.SERVICE_FILE_PATH).exists())) {
 			console.log("⚠️ Service file already exists, skipping generation");
 			return;
 		}
@@ -229,7 +222,7 @@ export class SystemdService {
 		await Bun.write(tempFile, this.computedServiceFile);
 
 		// Move to system directory with sudo
-		const cmdResult = Bun.spawnSync(["sudo", "mv", tempFile, this.constants.serviceFilePath]);
+		const cmdResult = Bun.spawnSync(["sudo", "mv", tempFile, SYSTEMD.SERVICE_FILE_PATH]);
 
 		if (!cmdResult.success) {
 			throw new Error(`Failed to move service file: ${cmdResult.stderr.toString()}`);
@@ -252,12 +245,12 @@ export class SystemdService {
 	 */
 	private setupLogFiles() {
 		const commands = [
-			["touch", this.constants.logFilePath],
-			["touch", this.constants.errorLogFilePath],
-			["chown", `${this.username}:${this.username}`, this.constants.logFilePath],
-			["chown", `${this.username}:${this.username}`, this.constants.errorLogFilePath],
-			["chmod", "644", this.constants.logFilePath],
-			["chmod", "644", this.constants.errorLogFilePath],
+			["touch", SYSTEMD.LOG_FILE_PATH],
+			["touch", SYSTEMD.ERROR_LOG_FILE_PATH],
+			["chown", `${this.username}:${this.username}`, SYSTEMD.LOG_FILE_PATH],
+			["chown", `${this.username}:${this.username}`, SYSTEMD.ERROR_LOG_FILE_PATH],
+			["chmod", "644", SYSTEMD.LOG_FILE_PATH],
+			["chmod", "644", SYSTEMD.ERROR_LOG_FILE_PATH],
 		];
 
 		for (const cmd of commands) {
@@ -301,7 +294,7 @@ export class SystemdService {
 	 * ```
 	 */
 	private enableService() {
-		const process = Bun.spawnSync(["sudo", "systemctl", "enable", "network-monitor"]);
+		const process = Bun.spawnSync(["sudo", "systemctl", "enable", SYSTEMD.SERVICE_NAME]);
 
 		if (!process.success) {
 			throw new Error(`Failed to enable service: ${process.stderr.toString()}`);
@@ -321,7 +314,7 @@ export class SystemdService {
 	 * ```
 	 */
 	private startService() {
-		const process = Bun.spawnSync(["sudo", "systemctl", "start", "network-monitor"]);
+		const process = Bun.spawnSync(["sudo", "systemctl", "start", SYSTEMD.SERVICE_NAME]);
 
 		if (!process.success) {
 			throw new Error(`Failed to start service: ${process.stderr.toString()}`);
@@ -363,8 +356,8 @@ Environment=SPEEDTEST_CIRCUIT_BREAKER_TIMEOUT=${this.options.circuitBreakerTimeo
 ExecStart=${Bun.which("bun") || "bun"} ${join(projectRoot, "bin/monitor.ts")}
 Restart=always
 RestartSec=10
-StandardOutput=append:${this.constants.logFilePath}
-StandardError=append:${this.constants.errorLogFilePath}
+StandardOutput=append:${SYSTEMD.LOG_FILE_PATH}
+StandardError=append:${SYSTEMD.ERROR_LOG_FILE_PATH}
 
 [Install]
 WantedBy=multi-user.target`;

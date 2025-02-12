@@ -1,3 +1,4 @@
+import { SYSTEMD } from "@network-monitor/shared";
 import Bun from "bun";
 
 import { ValidationError } from "../utils/errors";
@@ -64,10 +65,10 @@ export class SystemdService {
 	 * @param serviceName The name of the service to get the status of
 	 * @returns The status of the service
 	 */
-	public async getStatus(serviceName: string) {
+	public async getStatus() {
 		const output = await this.executeSystemctl([
 			"show",
-			serviceName,
+			SYSTEMD.SERVICE_NAME,
 			"--property=Description,LoadState,ActiveState,SubState,UnitFile",
 		]);
 
@@ -77,7 +78,7 @@ export class SystemdService {
 		}, {});
 
 		const status: ServiceStatus = {
-			name: serviceName,
+			name: SYSTEMD.SERVICE_NAME,
 			description: properties.Description || "",
 			loadState: properties.LoadState || "",
 			activeState: properties.ActiveState || "",
@@ -94,9 +95,9 @@ export class SystemdService {
 	 * @param serviceName The name of the service to start
 	 * @returns The status of the service after starting it
 	 */
-	public async startService(serviceName: string) {
-		await this.executeSystemctl(["start", serviceName]);
-		return this.getStatus(serviceName);
+	public async startService() {
+		await this.executeSystemctl(["start", SYSTEMD.SERVICE_NAME]);
+		return this.getStatus();
 	}
 
 	/**
@@ -105,9 +106,9 @@ export class SystemdService {
 	 * @param serviceName The name of the service to stop
 	 * @returns The status of the service after stopping it
 	 */
-	public async stopService(serviceName: string) {
-		await this.executeSystemctl(["stop", serviceName]);
-		return this.getStatus(serviceName);
+	public async stopService() {
+		await this.executeSystemctl(["stop", SYSTEMD.SERVICE_NAME]);
+		return this.getStatus();
 	}
 
 	/**
@@ -116,9 +117,9 @@ export class SystemdService {
 	 * @param serviceName The name of the service to restart
 	 * @returns The status of the service after restarting it
 	 */
-	public async restartService(serviceName: string) {
-		await this.executeSystemctl(["restart", serviceName]);
-		return this.getStatus(serviceName);
+	public async restartService() {
+		await this.executeSystemctl(["restart", SYSTEMD.SERVICE_NAME]);
+		return this.getStatus();
 	}
 
 	/**

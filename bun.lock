@@ -26,15 +26,6 @@
         "@network-monitor/shared": "workspace:*",
       },
     },
-    "apps/network-monitor": {
-      "name": "@network-monitor/service",
-      "version": "0.0.3",
-      "bin": {
-        "network-monitor": "bun run bin/monitor.ts",        "setup-systemd": "bun run bin/setup.ts"      },
-      "dependencies": {
-        "@network-monitor/shared": "workspace:*",
-      },
-    },
     "apps/server": {
       "name": "@network-monitor/server",
       "version": "0.1.0",
@@ -42,6 +33,15 @@
         "@elysiajs/swagger": "^0.8.0",
         "@network-monitor/shared": "workspace:*",
         "elysia": "^0.8.0",
+      },
+    },
+    "apps/service": {
+      "name": "@network-monitor/service",
+      "version": "0.0.3",
+      "bin": {
+        "network-monitor": "bun run scripts/network-monitor.ts",        "systemd-setup": "bun run scripts/systemd-setup.ts",        "systemd-permissions": "bun run scripts/systemd-permissions.ts"      },
+      "dependencies": {
+        "@network-monitor/shared": "workspace:*",
       },
     },
     "packages/shared": {
@@ -111,7 +111,7 @@
 
     "@network-monitor/server": ["@network-monitor/server@workspace:apps/server"],
 
-    "@network-monitor/service": ["@network-monitor/service@workspace:apps/network-monitor"],
+    "@network-monitor/service": ["@network-monitor/service@workspace:apps/service"],
 
     "@network-monitor/shared": ["@network-monitor/shared@workspace:packages/shared"],
 
