@@ -1,5 +1,3 @@
-import { getDatabasePath } from "@network-monitor/shared";
-
 /**
  * Validates and loads environment variables for the server
  * @throws {Error} If required environment variables are missing
@@ -16,7 +14,6 @@ function validateEnv() {
 	return {
 		port: parseInt(process.env.PORT ?? "3000"),
 		host: process.env.HOST ?? "0.0.0.0",
-		databasePath: getDatabasePath(),
 		nodeEnv: process.env.NODE_ENV,
 		authToken: process.env.AUTH_TOKEN || crypto.randomUUID(),
 		isDevelopment: process.env.NODE_ENV === "development",

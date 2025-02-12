@@ -12,12 +12,14 @@
 		"monitor:restart": "sudo systemctl restart network-monitor",
 		"monitor:status": "sudo systemctl status network-monitor",
 		"monitor:logs": "journalctl -u network-monitor -f",
-		"setup": "bunx @network-monitor/server setup-systemd",
-		"monitor": "bunx @network-monitor/server monitor"
+		"setup": "bunx @network-monitor/service systemd-setup",
+		"monitor": "bunx @network-monitor/service network-monitor",
+		"permissions": "bunx @network-monitor/service systemd-permissions"
 	},
 	"bin": {
-		"network-monitor": "bun run bin/monitor.ts",
-		"setup-systemd": "bun run bin/setup.ts"
+		"network-monitor": "bun run scripts/network-monitor.ts",
+		"systemd-setup": "bun run scripts/systemd-setup.ts",
+		"systemd-permissions": "bun run scripts/systemd-permissions.ts"
 	},
 	"dependencies": {
 		"@network-monitor/shared": "workspace:*"

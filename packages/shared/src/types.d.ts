@@ -1,5 +1,3 @@
-import type { Database } from "bun:sqlite";
-
 export interface SystemdSetupOptions {
     /** Whether to force regeneration of service files even if they exist */
     force?: boolean;
@@ -45,18 +43,6 @@ export interface SpeedtestMetrics {
     packet_loss: number;
     connection_quality: string;
     device_name: string;
-}
-
-/**
- * Service state interface
- */
-export interface ServiceState {
-    isRunning: boolean;
-    lastTestTime: number;
-    consecutiveFailures: number;
-    isCircuitBroken: boolean;
-    circuitBreakerResetTime: number | null;
-    db: Database | null;
 }
 
 /**

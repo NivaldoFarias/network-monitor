@@ -1,9 +1,11 @@
 import { join } from "path";
+import process from "process";
 
-import { loadConfig } from "../config";
 import Bun from "bun";
 
 import type { SystemdSetupOptions } from "@network-monitor/shared";
+
+import { loadConfig } from "../config";
 
 /**
  * Service class responsible for managing systemd service installation and configuration
@@ -18,7 +20,7 @@ import type { SystemdSetupOptions } from "@network-monitor/shared";
  * ```
  */
 export class SystemdService {
-	private readonly username = import.meta.env["USER"] ?? "";
+	private readonly username = process.env["USER"] ?? "";
 	private readonly options = loadConfig();
 	private readonly constants = {
 		serviceFilePath: "/etc/systemd/system/network-monitor.service",
@@ -26,6 +28,9 @@ export class SystemdService {
 		errorLogFilePath: "/var/log/network-monitor.error.log",
 		speedtestDownload:
 			"https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-x86_64.tgz",
+		serviceName: "network-monitor",
+		sudoersFile: "/etc/sudoers.d/network-monitor",
+		sudoersFileMode: 0o440,
 	};
 
 	/**
@@ -55,6 +60,62 @@ export class SystemdService {
 		} catch (error) {
 			console.error("❌ Service setup failed:", error);
 			throw error;
+		}
+	}
+
+	/**
+	 * Configure permissions for the network-monitor service
+	 *
+	 * Creates a sudoers entry for the network-monitor service
+	 * and ensures the sudoers file is valid
+	 *
+	 * @throws {Error} If permissions setup fails
+	 *
+	 * @example
+	 * ```bash
+	 * sudo bun run scripts/systemd-permissions.ts
+	 * ```
+	 */
+	public async setupPermissions() {
+		const currentUser = (await Bun.$`whoami`.text()).trim();
+
+		// Create the sudoers entry
+		const sudoersContent = [
+			"# Permissions for network-monitor service management",
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl status ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl start ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl stop ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl restart ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl list-units ${this.constants.serviceName}`,
+			`${currentUser} ALL=NOPASSWD: /bin/systemctl show ${this.constants.serviceName}`,
+		].join("\n");
+
+		try {
+			// Check if running as root
+			if (process.getuid?.() !== 0) {
+				throw new Error("This script must be run with sudo privileges");
+			}
+
+			// Write the sudoers file
+			await Bun.write(this.constants.sudoersFile, sudoersContent, {
+				mode: this.constants.sudoersFileMode,
+			});
+			console.log(`✅ Successfully created sudoers file at ${this.constants.sudoersFile}`);
+
+			// Verify the syntax of the new sudoers file
+			const { exitCode } = await Bun.$`visudo -c -f ${this.constants.sudoersFile}`;
+
+			if (exitCode !== 0) {
+				// If validation fails, remove the file and exit
+				await Bun.$`rm ${this.constants.sudoersFile}`;
+				throw new Error("Invalid sudoers file syntax");
+			}
+
+			console.log(`✅ Permissions configured successfully for user ${currentUser}`);
+			console.log(`✅ Service: ${this.constants.serviceName}`);
+		} catch (error) {
+			console.error("❌ Failed to configure permissions:", error);
+			process.exit(1);
 		}
 	}
 

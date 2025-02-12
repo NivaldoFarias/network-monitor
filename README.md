@@ -129,7 +129,7 @@ For development and testing:
 bun install
 
 # Run the monitor service
-bun run apps/network-monitor/src/index.ts
+bun run apps/service/src/index.ts
 
 # Run the API server
 bun run apps/server/src/index.ts

@@ -1,6 +1,3 @@
-/**
- * Defines the SQL statements for creating the database schema
- */
 export const schema = {
 	speed_results: `
     CREATE TABLE IF NOT EXISTS speed_results (

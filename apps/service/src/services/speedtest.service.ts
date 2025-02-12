@@ -2,15 +2,28 @@ import { hostname, networkInterfaces } from "os";
 
 import Bun from "bun";
 
-import type {
-	HealthStatus,
-	ServiceState,
-	SpeedtestData,
-	SpeedtestMetrics,
-} from "@network-monitor/shared";
+import type { HealthStatus, SpeedtestData, SpeedtestMetrics } from "@network-monitor/shared";
 
 import { loadConfig } from "../config";
-import { cleanupOldResults, closeDatabase, initializeDatabase, storeResult } from "../database";
+import { SpeedtestDatabase } from "../database";
+
+/**
+ * State interface for the speed test service
+ */
+export interface ServiceState {
+	/** Whether the service is running */
+	isRunning: boolean;
+	/** The time of the last test */
+	lastTestTime: number;
+	/** The number of consecutive failures */
+	consecutiveFailures: number;
+	/** Whether the circuit breaker is broken */
+	isCircuitBroken: boolean;
+	/** The time the circuit breaker will reset */
+	circuitBreakerResetTime: number | null;
+	/** The database connection */
+	db: SpeedtestDatabase | null;
+}
 
 /**
  * Service class managing network speed test monitoring and execution
@@ -48,7 +61,7 @@ export class SpeedTestService {
 	 */
 	private initialize() {
 		try {
-			this.state.db = initializeDatabase();
+			this.state.db = new SpeedtestDatabase();
 			this.state.isRunning = true;
 
 			// Setup signal handlers
@@ -108,7 +121,7 @@ export class SpeedTestService {
 				await this.runTest();
 
 				// Cleanup old results periodically
-				if (this.state.db) cleanupOldResults(this.state.db);
+				if (this.state.db) this.state.db.cleanupOldResults();
 
 				// Force garbage collection hint
 				if (global.gc) global.gc();
@@ -141,7 +154,7 @@ export class SpeedTestService {
 			try {
 				const result = await this.executeSpeedTest();
 
-				storeResult(this.state.db, result);
+				this.state.db.storeResult(result);
 				this.state.lastTestTime = Date.now();
 				this.state.consecutiveFailures = 0;
 				success = true;
@@ -364,7 +377,7 @@ export class SpeedTestService {
 	public shutdown(): Promise<void> {
 		console.log("Shutting down speed test service...");
 		this.state.isRunning = false;
-		closeDatabase(this.state.db);
+		this.state.db?.close();
 		process.exit(0);
 	}
 }

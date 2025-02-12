@@ -1,9 +1,10 @@
-import { DatabaseConnection } from "../database";
-import { SystemdService } from "../services/systemd.service";
+import { createDatabaseConnection } from "@network-monitor/shared";
 import { Elysia, t } from "elysia";
 
+import { SystemdService } from "../services/systemd.service";
+
 const systemd = new SystemdService();
-const db = DatabaseConnection.getInstance();
+const db = createDatabaseConnection();
 
 /**
  * Service routes handler

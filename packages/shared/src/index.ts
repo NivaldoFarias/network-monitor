@@ -2,3 +2,5 @@
 export * from "./types.d";
 export * from "./config";
 export * from "./constants";
+export * from "./connection";
+export * from "./schema";

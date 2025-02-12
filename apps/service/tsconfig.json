@@ -10,6 +10,6 @@
             "path": "../../packages/shared"
         }
     ],
-    "include": ["src/**/*", "bin/**/*"],
+    "include": ["src/**/*", "scripts/**/*"],
     "exclude": ["node_modules"]
 }
